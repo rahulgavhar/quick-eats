@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  ul {
+    list-style: none;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+  }
+  /* Theme-scoped CSS variables */
+  .theme-light {
+    --autofill-bg: #ffffff;
+    --autofill-text: #111827; /* gray-900 */
+    --select-option-bg: #ffffff;
+    --select-option-text: #111827;
+    --select-option-hover-bg: #f3f4f6; /* gray-100 */
+    --select-option-checked-bg: #22c55e; /* green-500 */
+    --select-option-checked-text: #ffffff;
+  }
+
+  .theme-dark {
+    --autofill-bg: rgb(55, 65, 81); /* gray-700 */
+    --autofill-text: #ffffff;
+    --select-option-bg: rgb(55, 65, 81);
+    --select-option-text: #ffffff;
+    --select-option-hover-bg: rgb(75, 85, 99); /* gray-600 */
+    --select-option-checked-bg: #22c55e; /* green-500 */
+    --select-option-checked-text: #ffffff;
+  }
+
+  /* Autofill background uses theme variables */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--autofill-bg) inset !important;
+    -webkit-text-fill-color: var(--autofill-text) !important;
+  }
+
+  /* Select/option colors depend on theme */
+  .theme-light select { color-scheme: light; }
+  .theme-dark select { color-scheme: dark; }
+
+  select option {
+    background-color: var(--select-option-bg);
+    color: var(--select-option-text);
+  }
+
+  select option:hover {
+    background-color: var(--select-option-hover-bg);
+    color: var(--select-option-text);
+  }
+
+  select option:checked {
+    background: linear-gradient(var(--select-option-checked-bg), var(--select-option-checked-bg));
+    color: var(--select-option-checked-text);
+  }
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px rgb(55, 65, 81) inset !important;
+    -webkit-text-fill-color: white !important;
+  }
+
+}
