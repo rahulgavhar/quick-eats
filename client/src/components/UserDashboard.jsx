@@ -13,11 +13,14 @@ import FoodCard from "./Dashboard/FoodCard";
 import CartItem from "./Dashboard/CartItem";
 import OrderSummary from "./Dashboard/OrderSummary";
 import Footer from "./Dashboard/Footer";
+import useGetCity from "../hooks/useGetCity";
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
-  const { userData } = useSelector((state) => state.user);
+  useGetCity();
+  const { userData, city } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
+  // console.log(city);
 
   // Sample restaurant data
   const [restaurants] = useState([
@@ -167,11 +170,7 @@ const UserDashboard = () => {
   const roleLabel = userData?.role
     ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1)
     : null;
-  const locationName =
-    userData?.address?.city ||
-    userData?.city ||
-    (typeof userData?.address === "string" ? userData.address : null) ||
-    "Mumbai";
+  const locationName = city || "Mumbai";
 
   // Food suggestions for dynamic placeholder
   const foodSuggestions = [

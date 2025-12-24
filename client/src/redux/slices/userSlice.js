@@ -6,6 +6,7 @@ import axios from "axios";
 ============================ */
 const initialState = {
   userData: null,
+  city: null,
   loading: false,
   error: null,
 };
@@ -66,6 +67,9 @@ const userSlice = createSlice({
       };
     },
     clearUserData: () => initialState,
+    setCity: (state, action) => {
+      state.city = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder

@@ -5,12 +5,18 @@ import ENV from './config/env.js';
 import connectDB from './config/db.js';
 
 const app = express();
+if (ENV.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+
 app.use(cors({
   origin: ENV.CLIENT_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Routes
@@ -22,7 +28,7 @@ app.use('/api/user', userRouter);
 
 
 // Start the server
-if (process.env.NODE_ENV === "production") {
+if (ENV.NODE_ENV === "production") {
   // 1. Serve static files first
   app.use(express.static(path.join(__dirname, "../client/dist")));
 

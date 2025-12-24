@@ -18,7 +18,7 @@ import themeReducer from "./slices/themeSlice";
 const userPersistConfig = {
   key: "user",
   storage,
-  whitelist: ["userData"],
+  whitelist: ["userData", "city"],
 };
 
 const persistedUserReducer = persistReducer(

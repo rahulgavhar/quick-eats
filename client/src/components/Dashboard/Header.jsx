@@ -26,8 +26,8 @@ const Header = ({
     <div
       className={`sticky top-0 z-40 shadow-lg p-6 max-md:p-2 transition-colors duration-300 ${
         mode === "dark"
-          ? "bg-gradient-to-r from-gray-800 to-gray-700 text-white"
-          : "bg-gradient-to-r from-green-500 to-teal-500 text-white"
+          ? "bg-linear-to-r from-gray-800 to-gray-700 text-white"
+          : "bg-linear-to-r from-green-500 to-teal-500 text-white"
       }`}
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center p-2">

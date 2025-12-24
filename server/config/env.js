@@ -8,6 +8,9 @@ const APP_KEYS =
     "CLIENT_URL",
     "OTP_EMAIL",
     "OTP_EMAIL_PASSWORD",
+    "GEO_API_KEY",
+    "REDIS_URL",
+    "REDIS_RESTAURANT_URL",
   ];
 
 /* 1. Validate required app keys */
