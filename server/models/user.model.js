@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema(
       select: false, // prevent accidental exposure
     },
 
+    countryCode: {
+      type: String,
+      trim: true,
+    },
+
     mobile: {
       type: String,
       required: true,
@@ -41,6 +46,11 @@ const userSchema = new mongoose.Schema(
       default: "user",
       required: true,
       index: true,
+    },
+
+    purchases: {
+      type: Number,
+      default: 0,
     },
 
     /* =========================

@@ -159,14 +159,10 @@ const SignUp = () => {
     // Prepare data for submission - join countryCode and mobile
     const submissionData = {
       ...formData,
-      mobile: formData.mobile
-        ? `${formData.countryCode}${formData.mobile}`
-        : "",
     };
 
     // Remove confirmPassword and countryCode as they're not needed in backend
     delete submissionData.confirmPassword;
-    delete submissionData.countryCode;
 
     // Handle signup logic here
     try {

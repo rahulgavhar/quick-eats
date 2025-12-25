@@ -20,7 +20,6 @@ const UserDashboard = () => {
   useGetCity();
   const { userData, city } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
-  // console.log(city);
 
   // Sample restaurant data
   const [restaurants] = useState([

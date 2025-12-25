@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 
 export const signUp = async (req, res) => {
   try {
-    const { fullName, email, password, mobile, role } = req.body;
+    const { fullName, email, password, mobile, role, countryCode } = req.body;
     const user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: "User already exists" });
@@ -32,6 +32,7 @@ export const signUp = async (req, res) => {
       password: hashedPassword,
       mobile,
       role,
+      countryCode,
     });
     await newUser.save();
 
@@ -44,9 +45,17 @@ export const signUp = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    const userToReturn = newUser.toObject();
+    delete userToReturn.password;
+    delete userToReturn.otp;
+    delete userToReturn.isOtpVerified;
+    delete userToReturn.otpExpiry;
+    delete userToReturn.otpRequests;
+    delete userToReturn.otpRequestsResetTime;
+
     res
       .status(201)
-      .json({ user: newUser, message: "User registered successfully" });
+      .json({ user: userToReturn, message: "User registered successfully" });
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -73,7 +82,15 @@ export const signIn = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ user: user, message: "Signed in successfully" });
+    const userToReturn = user.toObject();
+    delete userToReturn.password;
+    delete userToReturn.otp;
+    delete userToReturn.isOtpVerified;
+    delete userToReturn.otpExpiry;
+    delete userToReturn.otpRequests;
+    delete userToReturn.otpRequestsResetTime;
+
+    res.status(200).json({ user: userToReturn, message: "Signed in successfully" });
   } catch (error) {
     console.error("SignIn error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -381,7 +398,7 @@ export const googleAuth = async (req, res) => {
       user = await User.create({
         fullName,
         email,
-        mobile: mobile || "0000000000",
+        mobile: mobile || "",
         role: role || "user",
         password: hashedPassword,
       });

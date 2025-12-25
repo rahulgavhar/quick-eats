@@ -12,7 +12,7 @@ export const getCurrentUser = async (req, res) => {
     // exclude password field, otp, and other sensitive info
     const user = await User.findById(userId).select(
       "-password -otp -isOtpVerified -otpExpiry -otpRequests -otpRequestsResetTime"
-    );
+    ).lean();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -97,5 +97,35 @@ export const getUserCity = async (req, res) => {
     return res.status(500).json({
       message: "Internal server error",
     });
+  }
+};
+
+export const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const { name, email, mobile, countryCode, role } = req.body;
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (mobile) updateData.mobile = mobile;
+    if (countryCode) updateData.countryCode = countryCode;
+    if (role) updateData.role = role;
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password -otp -isOtpVerified -otpExpiry -otpRequests -otpRequestsResetTime");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

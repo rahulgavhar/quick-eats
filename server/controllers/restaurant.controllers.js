@@ -1,7 +1,7 @@
 import Restaurant from "../models/restaurant.model.js";
 import RestaurantProfile from "../models/restaurantProfile.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
-import redisClientRestaurant from "../redis/restaurantRedis.js";
+import redisClientRestaurant from "../utils/redisClientRestaurant.js";
 
 
 export const createRestaurant = async (req, res) => {

@@ -1,16 +1,21 @@
 import React from "react";
-import { MdPerson, MdReceipt, MdSettings, MdLogout } from "react-icons/md";
+import {
+  MdPerson,
+  MdRestaurantMenu,
+  MdLogout,
+  MdManageAccounts,
+} from "react-icons/md";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
+const OwnerProfileDropdown = ({
+  handleLogout,
+  setShowProfileDropdown,
+  onManageRestaurant,
+}) => {
   const navigate = useNavigate();
   const { userData } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
-
-  const roleLabel = userData?.role
-    ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1)
-    : null;
 
   return (
     <div
@@ -31,29 +36,24 @@ const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
               mode === "dark" ? "text-white" : "text-gray-800"
             }`}
           >
-            {userData?.name ||
-              userData?.fullName ||
-              userData?.username ||
-              "User"}
+            {userData?.name || userData?.fullName || userData?.username || "Owner"}
           </p>
-          {roleLabel && (
-            <span
-              className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                mode === "dark"
-                  ? "text-green-300 border-gray-600"
-                  : "text-green-800 border-green-300"
-              }`}
-            >
-              {roleLabel}
-            </span>
-          )}
+          <span
+            className={`text-[10px] px-2 py-0.5 rounded-full border ${
+              mode === "dark"
+                ? "text-green-300 border-gray-600"
+                : "text-green-800 border-green-300"
+            }`}
+          >
+            Owner
+          </span>
         </div>
         <p
           className={`text-sm ${
             mode === "dark" ? "text-gray-400" : "text-gray-600"
           }`}
         >
-          {userData?.email || "user@example.com"}
+          {userData?.email || "owner@example.com"}
         </p>
       </div>
 
@@ -75,8 +75,8 @@ const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
 
         <button
           onClick={() => {
+            onManageRestaurant();
             setShowProfileDropdown(false);
-            // Add orders navigation here
           }}
           className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors duration-200 ${
             mode === "dark"
@@ -84,14 +84,14 @@ const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
               : "text-gray-700 hover:bg-green-50 hover:text-green-600"
           }`}
         >
-          <MdReceipt size={20} />
-          <span>My Orders</span>
+          <MdManageAccounts size={20} />
+          <span>Manage Restaurant</span>
         </button>
 
         <button
           onClick={() => {
             setShowProfileDropdown(false);
-            // Add settings navigation here
+            // Add settings navigation
           }}
           className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors duration-200 ${
             mode === "dark"
@@ -99,15 +99,15 @@ const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
               : "text-gray-700 hover:bg-green-50 hover:text-green-600"
           }`}
         >
-          <MdSettings size={20} />
-          <span>Settings</span>
+          <MdRestaurantMenu size={20} />
+          <span>Menu Settings</span>
         </button>
 
         <div
           className={`border-t ${
             mode === "dark" ? "border-gray-700" : "border-gray-200"
           }`}
-        ></div>
+        />
 
         <button
           onClick={handleLogout}
@@ -125,4 +125,4 @@ const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
   );
 };
 
-export default ProfileDropdown;
+export default OwnerProfileDropdown;
