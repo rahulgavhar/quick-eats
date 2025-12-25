@@ -9,6 +9,7 @@ import { Navigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import { useDispatch } from "react-redux";
 import { fetchUserData } from "./redux/slices/userSlice.js";
+import PageNotFound from "./pages/PageNotFound.jsx";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -53,6 +54,16 @@ const App = () => {
       <Route
         path="/"
         element={!userData ? <Navigate to="/signin" /> : <Home />}
+      />
+      {/* 404 */}
+      <Route
+        path="/404"
+        element={<PageNotFound />}
+      />
+      {/* Catch-all route for undefined paths */}
+      <Route
+        path="*"
+        element={<PageNotFound />}
       />
     </Routes>
   );

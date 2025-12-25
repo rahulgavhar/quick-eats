@@ -4,9 +4,9 @@ import { logoutUser } from "../redux/slices/userSlice";
 import { persistor } from "../redux/store";
 
 // Import child components
-import Header from "./General/Header";
-import ProfileDropdown from "./General/ProfileDropdown";
-import MobileMenu from "./General/MobileMenu";
+import Header from "./User/UserHeader";
+import ProfileDropdown from "./User/UserProfileDropdown";
+import MobileMenu from "./User/UserMobileMenu";
 import SearchBar from "./User/SearchBar";
 import RestaurantCard from "./User/RestaurantCard";
 import FoodCard from "./General/FoodCard";

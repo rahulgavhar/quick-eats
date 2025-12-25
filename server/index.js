@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import ENV from './config/env.js';
 import connectDB from './config/db.js';
+import path from 'path';
 
 const app = express();
 if (ENV.NODE_ENV === "production") {
@@ -31,6 +32,14 @@ app.use('/api/restaurants', restaurantRouter);
 app.use('/api/items', itemRouter);
 
 
+
+
+
+
+
+app.use("/api/health", (req, res) => {
+  res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+});
 // Start the server
 if (ENV.NODE_ENV === "production") {
   // 1. Serve static files first
