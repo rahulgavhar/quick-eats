@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import ENV from './config/env.js';
 import connectDB from './config/db.js';
+import { SERVER_ROOT } from './config/filePath.js';
 import path from 'path';
 
 const app = express();
@@ -43,12 +44,12 @@ app.use("/api/health", (req, res) => {
 // Start the server
 if (ENV.NODE_ENV === "production") {
   // 1. Serve static files first
-  app.use(express.static(path.join(__dirname, "../client/dist")));
+  app.use(express.static(path.join(SERVER_ROOT, "../client/dist")));
 
   // 2. Catch-all route for SPA (React / Vite / Vue)
   // Express 5 requires naming the wildcard, e.g., {*any} or {*splat}
   app.get("/{*any}", (req, res) => {
-    res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+    res.sendFile(path.join(SERVER_ROOT, "../client/dist/index.html"));
   });
 }
 app.listen(ENV.PORT, async () => {
