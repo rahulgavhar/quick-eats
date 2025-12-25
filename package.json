@@ -6,6 +6,9 @@
     "client",
     "server"
   ],
+  "engines":{
+    "node": "22.x"
+  },
   "scripts": {
     "build": "npm install --workspaces --include=dev && npm run build --workspace=client",
     "start": "npm run start --workspace=server",
