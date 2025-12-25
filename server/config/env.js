@@ -11,6 +11,8 @@ const APP_KEYS =
     "GEO_API_KEY",
     "REDIS_URL",
     "REDIS_RESTAURANT_URL",
+    "CLOUDINARY_URL",
+    
   ];
 
 /* 1. Validate required app keys */

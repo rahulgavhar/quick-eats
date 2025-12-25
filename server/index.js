@@ -22,9 +22,13 @@ app.use(cookieParser());
 // Routes
 import authRouter from './routes/auth.routes.js';
 import userRouter from './routes/user.routes.js';
+import restaurantRouter from './routes/restaurant.routes.js';
+import itemRouter from './routes/item.routes.js';
 
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
+app.use('/api/restaurants', restaurantRouter);
+app.use('/api/items', itemRouter);
 
 
 // Start the server

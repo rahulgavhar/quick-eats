@@ -8,8 +8,8 @@ const Footer = () => {
     <footer
       className={`mt-12 py-8 transition-colors duration-300 ${
         mode === "dark"
-          ? "bg-gradient-to-r from-gray-800 to-gray-700"
-          : "bg-gradient-to-r from-green-500 to-teal-500"
+          ? "bg-linear-to-r from-gray-800 to-gray-700"
+          : "bg-linear-to-r from-green-500 to-teal-500"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 py-12">

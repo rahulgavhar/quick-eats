@@ -1,6 +1,10 @@
 import React from 'react'
+import useGetMyRestaurant from '../hooks/useGetMyRestaurant'
 
-const ownerDashboard = () => {
+const OwnerDashboard = () => {
+
+  useGetMyRestaurant();
+
   return (
     <div>
       
@@ -8,4 +12,4 @@ const ownerDashboard = () => {
   )
 }
 
-export default ownerDashboard
+export default OwnerDashboard

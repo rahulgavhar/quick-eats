@@ -4,15 +4,15 @@ import { logoutUser } from "../redux/slices/userSlice";
 import { persistor } from "../redux/store";
 
 // Import child components
-import Header from "./Dashboard/Header";
-import ProfileDropdown from "./Dashboard/ProfileDropdown";
-import MobileMenu from "./Dashboard/MobileMenu";
-import SearchBar from "./Dashboard/SearchBar";
-import RestaurantCard from "./Dashboard/RestaurantCard";
-import FoodCard from "./Dashboard/FoodCard";
-import CartItem from "./Dashboard/CartItem";
-import OrderSummary from "./Dashboard/OrderSummary";
-import Footer from "./Dashboard/Footer";
+import Header from "./General/Header";
+import ProfileDropdown from "./General/ProfileDropdown";
+import MobileMenu from "./General/MobileMenu";
+import SearchBar from "./User/SearchBar";
+import RestaurantCard from "./User/RestaurantCard";
+import FoodCard from "./General/FoodCard";
+import CartItem from "./User/CartItem";
+import OrderSummary from "./User/OrderSummary";
+import Footer from "./General/Footer";
 import useGetCity from "../hooks/useGetCity";
 
 const UserDashboard = () => {

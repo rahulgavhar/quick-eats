@@ -21,6 +21,7 @@ const Header = ({
 }) => {
   const dispatch = useDispatch();
   const { mode } = useSelector((state) => state.theme);
+  const { userData } = useSelector((state) => state.user);
 
   return (
     <div
@@ -79,7 +80,7 @@ const Header = ({
                 : "bg-white text-green-500 hover:bg-green-50"
             }`}
           >
-            <ImSpoonKnife size={20} /> Cart
+            <ImSpoonKnife size={20} /> {userData.role === 'user' ? 'Cart' : 'Orders'}
             {cart.length > 0 && (
               <span className="absolute -top-2 -right-2 bg-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
                 {cart.length}

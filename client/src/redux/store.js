@@ -13,21 +13,39 @@ import {
 } from "redux-persist";
 
 import userReducer from "./slices/userSlice";
+import ownerReducer from "./slices/ownerSlice";
 import themeReducer from "./slices/themeSlice";
 
+/*  Persisted Reducers Setup */
+
+// User Persist Config
 const userPersistConfig = {
   key: "user",
   storage,
   whitelist: ["userData", "city"],
 };
-
 const persistedUserReducer = persistReducer(
   userPersistConfig,
   userReducer
 );
 
+// Owner Persist Config
+const ownerPersistConfig = {
+  key: "owner",
+  storage,
+  whitelist: ["restaurantData"],
+};
+const persistedOwnerReducer = persistReducer(
+  ownerPersistConfig,
+  ownerReducer
+);
+
+
+
+// Root Reducer
 const rootReducer = combineReducers({
   user: persistedUserReducer,
+  owner: persistedOwnerReducer,
   theme: themeReducer,
 });
 
