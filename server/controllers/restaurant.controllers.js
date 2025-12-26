@@ -1,5 +1,5 @@
 import Restaurant from "../models/restaurant.model.js";
-import RestaurantProfile from "../models/restaurantProfile.model.js";
+import RestaurantProfile from "../models/restaurantprofile.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import redisClientRestaurant from "../utils/redisClientRestaurant.js";
 import ENV from "../config/env.js";
@@ -113,7 +113,7 @@ export const getRestaurantById = async (req, res) => {
             return res.status(400).json({ message: "Invalid restaurant ID" });
         }
 
-        const restaurant = await Restaurant.findById(restaurantId);
+        const restaurant = await Restaurant.findById({_id:restaurantId});
         if (!restaurant) {
             return res.status(404).json({ message: "Restaurant not found" });
         }

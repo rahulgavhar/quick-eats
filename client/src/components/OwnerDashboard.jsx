@@ -45,15 +45,12 @@ const OwnerDashboard = () => {
         setRestaurant(response.data);
       } catch (error) {
         console.error("Error fetching restaurant:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     // Fetch items
     const fetchItems = async () => {
       if (restaurant) {
-        setLoading(true);
         try {
           const response = await axios.get(
             `${apiURL}/api/items/owner`,
