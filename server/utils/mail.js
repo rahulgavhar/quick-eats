@@ -1,23 +1,8 @@
-import nodemailer from "nodemailer";
+import axios from "axios";
 import ENV from "../config/env.js";
 
-export const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false, // MUST be false for 587
-  auth: {
-    user: ENV.OTP_EMAIL,
-    pass: ENV.OTP_EMAIL_PASSWORD,
-  },
-  connectionTimeout: 60_000,
-  greetingTimeout: 30_000,
-  socketTimeout: 60_000,
-});
-
-
-
-
 export const sendOTPEmail = async (to, otp) => {
+
   const htmlTemplate = `
     <!DOCTYPE html>
     <html lang="en">
@@ -142,17 +127,31 @@ export const sendOTPEmail = async (to, otp) => {
     </html>
   `;
 
-  const mailOptions = {
-    from: "quickeatscontact@gmail.com",
-    to,
-    subject: "🔐 Reset Password - OTP Code",
-    html: htmlTemplate,
-  };
   try {
-    await transporter.verify();
-    await transporter.sendMail(mailOptions);
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "QuickEats",
+          email: ENV.OTP_EMAIL,
+        },
+        to: [{ email: to }],
+        subject: "🔐 Reset Password - OTP Code",
+        htmlContent: htmlTemplate,
+      },
+      {
+        headers: {
+          "api-key": ENV.OTP_EMAIL_PASSWORD,
+          "Content-Type": "application/json",
+        },
+        timeout: 10000,
+      }
+    );
   } catch (error) {
-    console.error("Error sending OTP email:", error);
+    console.error(
+      "Brevo HTTP error:",
+      error.response?.data || error.message
+    );
     throw new Error("Could not send OTP email");
   }
 };
