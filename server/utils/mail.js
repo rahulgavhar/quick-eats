@@ -143,7 +143,7 @@ export const sendOTPEmail = async (to, otp) => {
   `;
 
   const mailOptions = {
-    from: "rahulgavhardeploy12@gmail.com",
+    from: "quickeatscontact@gmail.com",
     to,
     subject: "🔐 Reset Password - OTP Code",
     html: htmlTemplate,

@@ -114,7 +114,7 @@ const MAX_OTP_REQUESTS = 5;
 export const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email }).select("+otp");
+    const user = await User.findOne({ email }).select("+otp +isOtpVerified +otpExpiry +otpRequests +otpRequestsResetTime");
 
     if (!user) {
       return res.status(400).json({
@@ -190,7 +190,7 @@ export const sendOTP = async (req, res) => {
 export const resendOTP = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email }).select("+otp");
+    const user = await User.findOne({ email }).select("+otp +isOtpVerified +otpExpiry +otpRequests +otpRequestsResetTime");
 
     if (!user) {
       return res.status(400).json({
