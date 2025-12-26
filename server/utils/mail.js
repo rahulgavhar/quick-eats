@@ -1,10 +1,10 @@
 import nodemailer from "nodemailer";
 import ENV from "../config/env.js";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+export const transporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
   port: 587,
-  secure: false,
+  secure: false, // MUST be false for 587
   auth: {
     user: ENV.OTP_EMAIL,
     pass: ENV.OTP_EMAIL_PASSWORD,
@@ -13,6 +13,8 @@ const transporter = nodemailer.createTransport({
   greetingTimeout: 30_000,
   socketTimeout: 60_000,
 });
+
+
 
 
 export const sendOTPEmail = async (to, otp) => {
@@ -141,12 +143,13 @@ export const sendOTPEmail = async (to, otp) => {
   `;
 
   const mailOptions = {
-    from: ENV.OTP_EMAIL,
+    from: "rahulgavhardeploy12@gmail.com",
     to,
     subject: "🔐 Reset Password - OTP Code",
     html: htmlTemplate,
   };
   try {
+    await transporter.verify();
     await transporter.sendMail(mailOptions);
   } catch (error) {
     console.error("Error sending OTP email:", error);

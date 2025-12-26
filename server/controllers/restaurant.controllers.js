@@ -113,7 +113,7 @@ export const getRestaurantById = async (req, res) => {
             return res.status(400).json({ message: "Invalid restaurant ID" });
         }
 
-        const restaurant = await Restaurant.findById({_id:restaurantId});
+        const restaurant = await Restaurant.findOne({_id:restaurantId});
         if (!restaurant) {
             return res.status(404).json({ message: "Restaurant not found" });
         }
