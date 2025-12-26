@@ -24,6 +24,7 @@ export const uploadToCloudinary = async (filePath, folder) => {
         url: ENV.CLOUDINARY_URL
     });
 
+
     try {
         // Upload file to Cloudinary
         const result = await cloudinary.uploader.upload(filePath, {

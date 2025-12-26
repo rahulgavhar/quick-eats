@@ -6,11 +6,11 @@ import { isAuth } from '../middlewares/isAuth.js';
 import { upload } from '../middlewares/multer.js';
 import { locationRateLimiter } from '../middlewares/rateLimiter.js';
 
-restaurantRouter.post('/create', isAuth, upload.single('image'), createRestaurant);
+restaurantRouter.post('/create', isAuth, upload.single('coverPhoto'), createRestaurant);
 restaurantRouter.put('/edit/:restaurantId', isAuth, upload.single('image'), editRestaurant);
 restaurantRouter.delete('/delete/:restaurantId', isAuth, deleteRestaurant);
 
-restaurantRouter.get('/:restaurantId', getRestaurantById);
+restaurantRouter.get('/id/:restaurantId', getRestaurantById);
 restaurantRouter.get('/owner', isAuth, getOwnerRestaurant);
 restaurantRouter.get('/city/:city', listRestaurantsInCity);
 restaurantRouter.get('/state/:state', listRestaurantsInState);

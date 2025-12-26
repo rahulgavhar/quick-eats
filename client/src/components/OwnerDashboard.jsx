@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/slices/userSlice";
 import { persistor } from "../redux/store";
 import axios from "axios";
+import { ownerSliceActions } from "../redux/slices/ownerSlice";
 
 // Import Owner components
 import OwnerHeader from "./Owner/OwnerHeader";
@@ -18,6 +19,7 @@ const OwnerDashboard = () => {
   const { userData } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
   const apiURL = import.meta.env.VITE_API_URL;
+  const reduxRestaurantData = useSelector((state) => state.owner.restaurantData);
 
   // State management
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -29,20 +31,31 @@ const OwnerDashboard = () => {
   const dropdownRef = useRef(null);
 
   // Sample restaurant data (would be fetched from API)
-  const [restaurant, setRestaurant] = useState(null);
+  const [restaurant, setRestaurant] = useState(reduxRestaurantData || null);
 
   useEffect(() => {
+
+    if(reduxRestaurantData) {
+      setRestaurant(reduxRestaurantData);
+      return;
+    }
+
     // Simulate fetching restaurant data
     const fetchRestaurant = async () => {
       setLoading(true);
       try {
         const response = await axios.get(`${apiURL}/api/restaurants/owner`, {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
           withCredentials: true,
         });
-        setRestaurant(response.data);
+        
+        if (response.data.code !== 404) setRestaurant({
+          name: response.data.restaurant.name,
+          image: response.data.profile.image,
+          location: response.data.profile.address,
+          rating: response.data.restaurant.rating,
+          isOpen: response.data.restaurant.isOpen,
+        });
+        
       } catch (error) {
         console.error("Error fetching restaurant:", error);
       }
@@ -55,9 +68,6 @@ const OwnerDashboard = () => {
           const response = await axios.get(
             `${apiURL}/api/items/owner`,
             {
-              headers: {
-                Authorization: `Bearer ${userData.token}`,
-              },
               withCredentials: true,
             }
           );
@@ -75,8 +85,12 @@ const OwnerDashboard = () => {
 
     fetchRestaurant();
     fetchItems();
-  }, [userData.token]);
+  }, []);
 
+  useEffect(() => {
+    // Update Redux store with restaurant data
+    dispatch(ownerSliceActions.setRestaurant(restaurant));
+  }, [restaurant]);
 
   // Derived user details
   const firstName = (
@@ -111,22 +125,35 @@ const OwnerDashboard = () => {
       const address = await axios.get(`${apiURL}/api/restaurants/address`, {
         params: {
           lat: formData.latitude,
-          lng: formData.longitude,
+          lon: formData.longitude,
         },
+        withCredentials: true,
       });
-      
-      setRestaurant({
-        id: 1,
+
+      // API call to create restaurant would go here
+      const newRestaurant = {
         ...formData,
-        rating: 4.5,
-        isOpen: true,
-        items: [],
         address: address.data.address,
-      });
+      };
 
-      console.log("Adding restaurant:", formData);
+      // uploading data with image file
+      const response = await axios.post(
+        `${apiURL}/api/restaurants/create`,
+        newRestaurant,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      )
 
-      setShowAddRestaurant(false);
+      setRestaurant({
+        ...newRestaurant,
+        id: response.data.restaurant._id,
+      })
+
+      setShowAddRestaurant(false)
       // Show success toast
     } catch (error) {
       console.error("Error:", error);
@@ -211,6 +238,8 @@ const OwnerDashboard = () => {
         hasRestaurant={!!restaurant}
         onAddRestaurant={() => setShowAddRestaurant(true)}
         onAddItem={() => setShowAddItem(true)}
+        onManageRestaurant={() => setShowManageRestaurant(true)}
+        handleLogout={handleLogout}
         showProfileDropdown={showProfileDropdown}
         setShowProfileDropdown={setShowProfileDropdown}
         showMobileMenu={showMobileMenu}

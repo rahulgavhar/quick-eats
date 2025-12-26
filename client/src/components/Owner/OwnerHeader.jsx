@@ -4,6 +4,7 @@ import { RiMenu3Line } from "react-icons/ri";
 import { GiCrossedBones } from "react-icons/gi";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../../redux/slices/themeSlice";
+import OwnerMobileMenu from "./OwnerMobileMenu";
 
 const OwnerHeader = ({
   firstName,
@@ -15,6 +16,8 @@ const OwnerHeader = ({
   showMobileMenu,
   setShowMobileMenu,
   dropdownRef,
+  onManageRestaurant,
+  handleLogout,
   ProfileDropdown,
 }) => {
   const dispatch = useDispatch();
@@ -118,60 +121,15 @@ const OwnerHeader = ({
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {showMobileMenu && (
-        <div
-          className={`md:hidden mt-4 p-4 rounded-lg space-y-3 ${
-            mode === "dark" ? "bg-gray-700" : "bg-white/10"
-          }`}
-        >
-          {hasRestaurant ? (
-            <button
-              onClick={() => {
-                onAddItem();
-                setShowMobileMenu(false);
-              }}
-              className={`w-full px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-                mode === "dark"
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-white text-green-500 hover:bg-green-50"
-              }`}
-            >
-              <MdAdd size={20} /> Add Item
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                onAddRestaurant();
-                setShowMobileMenu(false);
-              }}
-              className={`w-full px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-                mode === "dark"
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-white text-green-500 hover:bg-green-50"
-              }`}
-            >
-              <MdAdd size={20} /> Add Restaurant
-            </button>
-          )}
-
-          {/* Theme Toggle Mobile */}
-          <button
-            onClick={() => {
-              dispatch(toggleTheme());
-              setShowMobileMenu(false);
-            }}
-            className={`w-full px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-              mode === "dark"
-                ? "bg-gray-600 text-white hover:bg-gray-500"
-                : "bg-white text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            {mode === "dark" ? <MdLightMode /> : <MdDarkMode />}
-            {mode === "dark" ? "Light Mode" : "Dark Mode"}
-          </button>
-        </div>
-      )}
+      <OwnerMobileMenu
+        showMobileMenu={showMobileMenu}
+        setShowMobileMenu={setShowMobileMenu}
+        hasRestaurant={hasRestaurant}
+        onAddItem={onAddItem}
+        onAddRestaurant={onAddRestaurant}
+        onManageRestaurant={onManageRestaurant}
+        handleLogout={handleLogout}
+      />
     </div>
   );
 };

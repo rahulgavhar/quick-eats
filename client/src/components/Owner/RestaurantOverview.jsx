@@ -21,6 +21,16 @@ const RestaurantOverview = ({ restaurant, onManage, onDelete }) => {
     );
   }
 
+  const bannerStyle = {
+    backgroundImage: restaurant.image
+      ? `linear-gradient(135deg, rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url(${restaurant.image})`
+      : mode === "dark"
+      ? "linear-gradient(135deg, #1f2937, #0f172a)"
+      : "linear-gradient(135deg, #ecfdf3, #d1fae5)",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  };
+
   return (
     <div
       className={`p-6 rounded-lg border transition-colors duration-300 ${
@@ -29,6 +39,22 @@ const RestaurantOverview = ({ restaurant, onManage, onDelete }) => {
           : "bg-white border-gray-200"
       }`}
     >
+      <div
+        className="rounded-lg h-40 mb-6 border overflow-hidden"
+        style={bannerStyle}
+      >
+        <div className="h-full w-full flex items-end bg-black/20">
+          <div className="p-4">
+            <p className="text-white/90 text-sm font-semibold">
+              {restaurant.cuisine || "Multi-cuisine"}
+            </p>
+            <h2 className="text-white text-2xl font-bold drop-shadow">
+              {restaurant.name}
+            </h2>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold mb-2">{restaurant.name}</h2>
@@ -39,13 +65,6 @@ const RestaurantOverview = ({ restaurant, onManage, onDelete }) => {
           >
             {restaurant.cuisine || "Multi-cuisine"}
           </p>
-        </div>
-        <div
-          className={`text-4xl px-3 py-1 rounded-lg ${
-            mode === "dark" ? "bg-gray-700" : "bg-gray-100"
-          }`}
-        >
-          {restaurant.image || "🍽️"}
         </div>
       </div>
 

@@ -3,17 +3,19 @@ import RestaurantProfile from "../models/restaurantProfile.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import redisClientRestaurant from "../utils/redisClientRestaurant.js";
 import ENV from "../config/env.js";
+import axios from "axios";
 
 
 export const createRestaurant = async (req, res) => {
     try {
-        const { name, address, city, state, lon, lat, phoneNumber, email } = req.body;
+        const { name, address, city, state, longitude, latitude, phone, email } = req.body;
         let imageUrl = null;
 
         if(req.file) {
             // Upload image to Cloudinary
             imageUrl = await uploadToCloudinary(req.file.path, 'restaurant_images');
         }
+
         // Create Restaurant
         const restaurant = new Restaurant({
             name,
@@ -21,20 +23,20 @@ export const createRestaurant = async (req, res) => {
             state,
             location: {
                 type: "Point",
-                coordinates: [parseFloat(lon), parseFloat(lat)],
+                coordinates: [parseFloat(longitude), parseFloat(latitude)],
             },
         });
 
         const savedRestaurant = await restaurant.save();
-
+        
         // Create Restaurant Profile
         const restaurantProfile = new RestaurantProfile({
             restaurantId: savedRestaurant._id,
             address,
             image: imageUrl,
-            phone: phoneNumber,
+            phone,
             email,
-            owner: req.user._id, // Assuming req.user contains the authenticated user
+            owner: req.userId,
         });
         await restaurantProfile.save();
 
@@ -130,12 +132,13 @@ export const getRestaurantById = async (req, res) => {
 
 export const getOwnerRestaurant = async (req, res) => {
     try {
-        const ownerId = req.user._id;
+        const ownerId = req.userId;
         const restaurantProfile = await RestaurantProfile.findOne({ owner: ownerId });
         if (!restaurantProfile) {
-            return res.status(404).json({ message: "Restaurant profile not found for this owner" });
+            return res.status(200).json({ code: 404, message: "Owner has no restaurant" });
         }
         const restaurant = await Restaurant.findById(restaurantProfile.restaurantId);
+        
         res.status(200).json({
             restaurant,
             profile: restaurantProfile,
@@ -285,6 +288,7 @@ export const listRestaurantsNearLocation = async (req, res) => {
 export const getAddressFromCoordinates = async (req, res) => {
     try {
         const { lon, lat } = req.query;
+        
         const longitude = parseFloat(lon);
         const latitude = parseFloat(lat);
         if (Number.isNaN(longitude) || Number.isNaN(latitude)) {
