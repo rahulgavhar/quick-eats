@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/slices/userSlice";
 import { persistor } from "../redux/store";
+import axios from "axios";
 
 // Import Owner components
 import OwnerHeader from "./Owner/OwnerHeader";
@@ -16,6 +17,7 @@ const OwnerDashboard = () => {
   const dispatch = useDispatch();
   const { userData } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
+  const apiURL = import.meta.env.VITE_API_URL;
 
   // State management
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -28,40 +30,56 @@ const OwnerDashboard = () => {
 
   // Sample restaurant data (would be fetched from API)
   const [restaurant, setRestaurant] = useState(null);
-  // const [restaurant, setRestaurant] = useState({
-  //   id: 1,
-  //   name: "Pizza Palace",
-  //   cuisine: "Italian",
-  //   location: "Downtown",
-  //   phone: "123-456-7890",
-  //   image: "🍕",
-  //   rating: 4.7,
-  //   deliveryTime: "25-35",
-  //   deliveryFee: "1.99",
-  //   isOpen: true,
-  //   items: [
-  //     {
-  //       id: 1,
-  //       name: "Margherita Pizza",
-  //       description: "Fresh basil, mozzarella, tomato",
-  //       price: 12.99,
-  //       image: "🍕",
-  //       category: "Main Course",
-  //       isVegetarian: true,
-  //       isAvailable: true,
-  //     },
-  //     {
-  //       id: 2,
-  //       name: "Pepperoni Pizza",
-  //       description: "Loaded with pepperoni slices",
-  //       price: 14.99,
-  //       image: "🍕",
-  //       category: "Main Course",
-  //       isVegetarian: false,
-  //       isAvailable: true,
-  //     },
-  //   ],
-  // });
+
+  useEffect(() => {
+    // Simulate fetching restaurant data
+    const fetchRestaurant = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`${apiURL}/api/restaurants/owner`, {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
+          withCredentials: true,
+        });
+        setRestaurant(response.data);
+      } catch (error) {
+        console.error("Error fetching restaurant:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch items
+    const fetchItems = async () => {
+      if (restaurant) {
+        setLoading(true);
+        try {
+          const response = await axios.get(
+            `${apiURL}/api/items/owner`,
+            {
+              headers: {
+                Authorization: `Bearer ${userData.token}`,
+              },
+              withCredentials: true,
+            }
+          );
+          setRestaurant((prev) => ({
+            ...prev,
+            items: response.data,
+          }));
+        } catch (error) {
+          console.error("Error fetching items:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchRestaurant();
+    fetchItems();
+  }, [userData.token]);
+
 
   // Derived user details
   const firstName = (
@@ -92,17 +110,24 @@ const OwnerDashboard = () => {
   const handleAddRestaurant = async (formData) => {
     setLoading(true);
     try {
-      // API call would go here
-      console.log("Adding restaurant:", formData);
-
-      // For demo purposes, set the restaurant
+      // Fetching address from coordinates could be done here
+      const address = await axios.get(`${apiURL}/api/restaurants/address`, {
+        params: {
+          lat: formData.latitude,
+          lng: formData.longitude,
+        },
+      });
+      
       setRestaurant({
         id: 1,
         ...formData,
         rating: 4.5,
         isOpen: true,
         items: [],
+        address: address.data.address,
       });
+
+      console.log("Adding restaurant:", formData);
 
       setShowAddRestaurant(false);
       // Show success toast

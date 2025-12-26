@@ -2,6 +2,7 @@ import Restaurant from "../models/restaurant.model.js";
 import RestaurantProfile from "../models/restaurantProfile.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import redisClientRestaurant from "../utils/redisClientRestaurant.js";
+import ENV from "../config/env.js";
 
 
 export const createRestaurant = async (req, res) => {
@@ -279,4 +280,33 @@ export const listRestaurantsNearLocation = async (req, res) => {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
   }
+};
+
+export const getAddressFromCoordinates = async (req, res) => {
+    try {
+        const { lon, lat } = req.query;
+        const longitude = parseFloat(lon);
+        const latitude = parseFloat(lat);
+        if (Number.isNaN(longitude) || Number.isNaN(latitude)) {
+            return res.status(400).json({ message: "Invalid coordinates" });
+        }
+        
+        const geoApiKey = ENV.GEO_API_KEY;
+        if (!geoApiKey) {
+            return res.status(500).json({ message: "Geocoding API key missing" });
+        }
+        const geoApiUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${geoApiKey}`;
+
+        const response = await axios.get(geoApiUrl, { timeout: 5000 });
+        const data = response.data;
+        if (data?.results?.length === 0) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+        const result = data.results[0];
+        const address = result.formatted;
+        return res.status(200).json({ address });
+    } catch (error) {
+        console.error("Error fetching address:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
 };

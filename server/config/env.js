@@ -12,7 +12,6 @@ const APP_KEYS =
     "REDIS_URL",
     "REDIS_RESTAURANT_URL",
     "CLOUDINARY_URL",
-    
   ];
 
 /* 1. Validate required app keys */

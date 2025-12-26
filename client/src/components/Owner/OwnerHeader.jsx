@@ -33,7 +33,7 @@ const OwnerHeader = ({
           <h1 className="text-3xl font-bold max-[270px]:hidden">
             🍽️ Quick Eats
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pt-2">
             <p className={mode === "dark" ? "text-gray-300" : "text-green-100"}>
               <span className="min-[270px]:hidden">🍽️ </span>
               Hi, {firstName}!
@@ -41,7 +41,7 @@ const OwnerHeader = ({
             <span
               className={`text-xs px-2 py-1 rounded-full font-semibold border ${
                 mode === "dark"
-                  ? "bg-gray-700 text-green-300 border-gray-600"
+                  ? "bg-gray-700 text-red-300 border-gray-600"
                   : "bg-white/20 text-white border-white/40"
               }`}
             >

@@ -259,7 +259,7 @@ const ResetPassword = () => {
       {/* Theme Toggle Button */}
       <button
         onClick={() => dispatch(toggleTheme())}
-        className="absolute top-6 right-6 p-2 rounded-full transition-all duration-300 hover:opacity-80"
+        className="absolute top-6 right-6 p-2 rounded-full bg-transparent transition-all duration-300 hover:opacity-80"
         title={mode === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
       >
         {mode === "dark" ? (

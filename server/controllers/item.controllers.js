@@ -99,7 +99,7 @@ export const deleteItem = async (req, res) => {
     }
 };
 
-export const getItemsByRestaurant = async (req, res) => {
+export const getItemsByOwner = async (req, res) => {
     try {
         const restaurant = await RestaurantProfile.findOne({ owner: req.user._id });
         if (!restaurant) {
@@ -109,6 +109,20 @@ export const getItemsByRestaurant = async (req, res) => {
         res.status(200).json({ items });
     } catch (error) {
         console.error('Error fetching items:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const getItemsByRestaurant = async (req, res) => {
+    try {
+        const restaurantId = req.query.restaurantId;
+        if(!restaurantId) {
+            return res.status(400).json({ message: 'Restaurant ID is required' });
+        }
+        const items = await Item.find({ restaurantId });
+        res.status(200).json({ items });
+    } catch (error) {
+        console.error('Error fetching items by restaurant:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
