@@ -1,5 +1,5 @@
 import Restaurant from "../models/restaurant.model.js";
-import RestaurantProfile from "../models/restaurantprofile.model.js";
+import RestaurantProfile from "../models/restaurantProfile.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import redisClientRestaurant from "../utils/redisClientRestaurant.js";
 import ENV from "../config/env.js";

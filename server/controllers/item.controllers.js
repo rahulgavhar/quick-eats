@@ -1,5 +1,5 @@
 import Item from "../models/item.model.js";
-import RestaurantProfile from "../models/restaurantprofile.model.js";
+import RestaurantProfile from "../models/restaurantProfile.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 export const addItem = async (req, res) => {
