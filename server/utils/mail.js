@@ -2,14 +2,18 @@ import nodemailer from "nodemailer";
 import ENV from "../config/env.js";
 
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  port: 465,
-  secure: true, // Use true for port 465, false for port 587
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: ENV.OTP_EMAIL,
     pass: ENV.OTP_EMAIL_PASSWORD,
   },
+  connectionTimeout: 60_000,
+  greetingTimeout: 30_000,
+  socketTimeout: 60_000,
 });
+
 
 export const sendOTPEmail = async (to, otp) => {
   const htmlTemplate = `
