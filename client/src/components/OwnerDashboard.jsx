@@ -13,6 +13,8 @@ import AddRestaurantForm from "./Owner/AddRestaurantForm";
 import AddItemForm from "./Owner/AddItemForm";
 import ManageRestaurant from "./Owner/ManageRestaurant";
 import Footer from "./General/Footer";
+import { toast } from "react-toastify";
+import Loader from "./General/Loader";
 
 const OwnerDashboard = () => {
   const dispatch = useDispatch();
@@ -50,20 +52,31 @@ const OwnerDashboard = () => {
         
         if (response.data.code !== 404) setRestaurant({
           name: response.data.restaurant.name,
+          city: response.data.restaurant.city,
+          state: response.data.restaurant.state,
+          phone: response.data.profile.phone,
+          email: response.data.profile.email,
           image: response.data.profile.image,
           location: response.data.profile.address,
           rating: response.data.restaurant.rating,
           isOpen: response.data.restaurant.isOpen,
+          latitude: response.data.restaurant.location.coordinates[1],
+          longitude: response.data.restaurant.location.coordinates[0],
+          cuisine: response.data.profile.cuisine,
+          id: response.data.restaurant._id,
         });
         
       } catch (error) {
         console.error("Error fetching restaurant:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     // Fetch items
     const fetchItems = async () => {
       if (restaurant) {
+        setLoading(true);
         try {
           const response = await axios.get(
             `${apiURL}/api/items/owner`,
@@ -115,6 +128,7 @@ const OwnerDashboard = () => {
     await dispatch(logoutUser()).unwrap();
     await persistor.purge();
     setShowProfileDropdown(false);
+    toast.success("Logged out successfully");
   };
 
   // Handle add restaurant
@@ -148,16 +162,59 @@ const OwnerDashboard = () => {
         }
       )
 
-      setRestaurant({
-        ...newRestaurant,
+      const fetchedRestaurant = {
         id: response.data.restaurant._id,
-      })
+        name: response.data.restaurant.name,
+        city: response.data.restaurant.city,
+        state: response.data.restaurant.state,
+        phone: response.data.profile.phone,
+        email: response.data.profile.email,
+        coverPhoto: response.data.profile.image,
+        location: response.data.profile.address,
+        rating: response.data.restaurant.rating,
+        isOpen: response.data.restaurant.isOpen,
+        latitude: response.data.restaurant.location.coordinates[1],
+        longitude: response.data.restaurant.location.coordinates[0],
+        cuisine: response.data.profile.cuisine,
+      };
+
+      setRestaurant(fetchedRestaurant);
+
+      dispatch(ownerSliceActions.setRestaurant(fetchedRestaurant));
 
       setShowAddRestaurant(false)
       // Show success toast
+      toast.success("Restaurant created successfully");
     } catch (error) {
       console.error("Error:", error);
       // Show error toast
+      toast.error("Could not create restaurant. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle edit restaurant
+  const handleEditRestaurant = async (formData) => {
+    setLoading(true);
+    try {
+      await axios.put(`${apiURL}/api/restaurants/edit/${restaurant.id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      });
+      setRestaurant((prev) => ({
+        ...prev,
+        ...formData,
+      }));
+      setShowAddRestaurant(false);
+      // Show success toast
+      toast.success("Restaurant updated successfully");
+    } catch (error) {
+      console.error("Error:", error);
+      // Show error toast
+      toast.error("Could not update restaurant. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -185,6 +242,7 @@ const OwnerDashboard = () => {
 
       setShowAddItem(false);
       // Show success toast
+      toast.success("Item added successfully");
     } catch (error) {
       console.error("Error:", error);
       // Show error toast
@@ -214,15 +272,19 @@ const OwnerDashboard = () => {
   };
 
   // Handle delete restaurant
-  const handleDeleteRestaurant = () => {
+  const handleDeleteRestaurant = async () => {
     if (
       window.confirm(
         "Are you sure you want to delete this restaurant? This action cannot be undone."
       )
     ) {
       setRestaurant(null);
-      // API call would go here
-      console.log("Deleting restaurant");
+      dispatch(ownerSliceActions.clearRestaurant());
+      await axios.delete(`${apiURL}/api/restaurants/delete/${restaurant.id}`, {
+        withCredentials: true,
+      });
+      // Show success toast
+      toast.success("Restaurant deleted successfully");
     }
   };
 
@@ -232,6 +294,8 @@ const OwnerDashboard = () => {
         mode === "dark" ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
       }`}
     >
+      {loading && <Loader />}
+
       {/* Header */}
       <OwnerHeader
         firstName={firstName}
@@ -384,6 +448,7 @@ const OwnerDashboard = () => {
 
       {showManageRestaurant && (
         <ManageRestaurant
+          onEdit={handleEditRestaurant}
           restaurant={restaurant}
           onClose={() => setShowManageRestaurant(false)}
           onAddItem={() => {

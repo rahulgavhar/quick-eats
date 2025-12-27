@@ -10,6 +10,11 @@ const restaurantProfileSchema = new mongoose.Schema(
       index: true,
     },
 
+    cuisine: {
+      type: String,
+      trim: true,
+    },
+
     address: {
       type: String,
       required: true,

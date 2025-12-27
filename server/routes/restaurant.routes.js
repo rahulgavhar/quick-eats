@@ -7,7 +7,7 @@ import { upload } from '../middlewares/multer.js';
 import { locationRateLimiter } from '../middlewares/rateLimiter.js';
 
 restaurantRouter.post('/create', isAuth, upload.single('coverPhoto'), createRestaurant);
-restaurantRouter.put('/edit/:restaurantId', isAuth, upload.single('image'), editRestaurant);
+restaurantRouter.put('/edit/:restaurantId', isAuth, upload.single('coverPhoto'), editRestaurant);
 restaurantRouter.delete('/delete/:restaurantId', isAuth, deleteRestaurant);
 
 restaurantRouter.get('/id/:restaurantId', getRestaurantById);

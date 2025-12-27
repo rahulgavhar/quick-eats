@@ -21,12 +21,14 @@ const RestaurantOverview = ({ restaurant, onManage, onDelete }) => {
     );
   }
 
+  // light or dark mode banner style
+  // for light mode bright image with dark overlay
   const bannerStyle = {
     backgroundImage: restaurant.image
-      ? `linear-gradient(135deg, rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url(${restaurant.image})`
+      ? `url(${restaurant.coverPhoto})`
       : mode === "dark"
       ? "linear-gradient(135deg, #1f2937, #0f172a)"
-      : "linear-gradient(135deg, #ecfdf3, #d1fae5)",
+      : "linear-gradient(135deg, #d1fae5, #14b8a6)",
     backgroundSize: "cover",
     backgroundPosition: "center",
   };
@@ -43,7 +45,7 @@ const RestaurantOverview = ({ restaurant, onManage, onDelete }) => {
         className="rounded-lg h-40 mb-6 border overflow-hidden"
         style={bannerStyle}
       >
-        <div className="h-full w-full flex items-end bg-black/20">
+        <div className={`h-full w-full flex items-end ${mode !== "dark" ? "" : "bg-black/20"}`}>
           <div className="p-4">
             <p className="text-white/90 text-sm font-semibold">
               {restaurant.cuisine || "Multi-cuisine"}

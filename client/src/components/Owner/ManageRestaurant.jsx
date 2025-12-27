@@ -1,17 +1,20 @@
 import React, { useState } from "react";
 import { MdClose, MdEdit, MdDelete, MdAdd } from "react-icons/md";
 import { useSelector } from "react-redux";
+import AddRestaurantForm from "./AddRestaurantForm";
 
-const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDeleteItem }) => {
+const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDeleteItem, onEdit }) => {
   const { mode } = useSelector((state) => state.theme);
   const [editingItem, setEditingItem] = useState(null);
   const [showAddItem, setShowAddItem] = useState(false);
+  const [showAddRestaurantForm, setShowAddRestaurantForm] = useState(false);
 
   if (!restaurant) {
     return null;
   }
 
   return (
+    <>
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div
         className={`w-full max-w-2xl rounded-lg shadow-xl transition-colors duration-300 max-h-[90vh] overflow-y-auto ${
@@ -25,7 +28,7 @@ const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDele
           }`}
         >
           <h2 className="text-2xl font-bold">
-            {restaurant.image} Manage {restaurant.name}
+            Manage {restaurant.name}
           </h2>
           <button
             onClick={onClose}
@@ -47,7 +50,20 @@ const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDele
                 : "border-gray-200 bg-gray-50"
             }`}
           >
-            <h3 className="font-semibold mb-3">Restaurant Details</h3>
+            <div className="flex relative">
+              <h3 className="font-semibold mb-3">Restaurant Details</h3>
+              <button className="bg-transparent absolute top-0 right-0 p-1">
+                <MdEdit
+                  size={20}
+                  className={`ml-2 cursor-pointer ${
+                    mode === "dark" ? "text-green-400" : "text-green-700"
+                  }`}
+                  onClick={() => {
+                    setShowAddRestaurantForm(true);
+                  }}
+                />
+              </button>
+            </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className={mode === "dark" ? "text-gray-400" : "text-gray-600"}>
@@ -189,7 +205,19 @@ const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDele
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      
+      {showAddRestaurantForm && (
+        <AddRestaurantForm
+          initialData={restaurant}
+          onClose={() => setShowAddRestaurantForm(false)}
+          onSave={(updatedRestaurant) => {
+            onEdit(updatedRestaurant);
+            setShowAddRestaurantForm(false);
+          }}
+        />
+      )}
+    </>
   );
 };
 

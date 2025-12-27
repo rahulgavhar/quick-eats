@@ -8,7 +8,7 @@ import axios from "axios";
 
 export const createRestaurant = async (req, res) => {
     try {
-        const { name, address, city, state, longitude, latitude, phone, email } = req.body;
+        const { name, address, city, state, longitude, latitude, phone, email, cuisine } = req.body;
         let imageUrl = null;
 
         if(req.file) {
@@ -37,6 +37,7 @@ export const createRestaurant = async (req, res) => {
             phone,
             email,
             owner: req.userId,
+            cuisine,
         });
         await restaurantProfile.save();
 
@@ -59,12 +60,13 @@ export const editRestaurant = async (req, res) => {
             return res.status(400).json({ message: "Invalid restaurant ID" });
         }
 
-        const { name, address, city, state, lon, lat, phoneNumber, email } = req.body;
+        const { name, address, city, state, longitude:lon, latitude:lat, phone, email, cuisine } = req.body;
         let imageUrl = null;
         if(req.file) {
             // Upload new image to Cloudinary
             imageUrl = await uploadToCloudinary(req.file.path, 'restaurant_images');
         }
+
         // Update Restaurant
         const restaurant = await Restaurant.findByIdAndUpdate(
             restaurantId,
@@ -85,8 +87,9 @@ export const editRestaurant = async (req, res) => {
         // Update Restaurant Profile
         const profileUpdates = {
             address,
-            phone: phoneNumber,
+            phone,
             email,
+            cuisine,
         };
         if (imageUrl) {
             profileUpdates.image = imageUrl;
@@ -161,7 +164,7 @@ export const deleteRestaurant = async (req, res) => {
         if (!restaurant) {
             return res.status(404).json({ message: "Restaurant not found" });
         }
-        await RestaurantProfile.findOneAndDelete({ restaurantId: restaurant._id });
+        await RestaurantProfile.findOneAndDelete({ restaurantId });
         res.status(200).json({ message: "Restaurant deleted successfully" });
     } catch (error) {
         console.error("Error deleting restaurant:", error);

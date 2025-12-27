@@ -4,23 +4,23 @@ import { useSelector } from "react-redux";
 import useLonLat from "../../hooks/useLonLat";
 import MapPicker from "./MapPicker";
 
-const AddRestaurantForm = ({ onClose, onSubmit }) => {
+const AddRestaurantForm = ({ onClose, onSubmit, initialData, onSave }) => {
   const { mode } = useSelector((state) => state.theme);
   const { coords, loading: locLoading, error: locError, refresh } = useLonLat();
   const [formData, setFormData] = useState({
-    name: "",
-    cuisine: "",
-    location: "",
-    city: "",
-    state: "",
-    phone: "",
-    email: "",
+    name: `${initialData?.name || ""}`,
+    cuisine: `${initialData?.cuisine || ""}`,
+    location: `${initialData?.location || ""}`,
+    city: `${initialData?.city || ""}`,
+    state: `${initialData?.state || ""}`,
+    phone: `${initialData?.phone || ""}`,
+    email: `${initialData?.email || ""}`,
     image: "🍽️",
-    coverPhoto: null,
+    coverPhoto: `${initialData?.coverPhoto || null}`,
     deliveryTime: "30-45",
     deliveryFee: "2.99",
-    longitude: "",
-    latitude: "",
+    longitude: Number.parseFloat(`${initialData?.longitude || ""}`),
+    latitude: Number.parseFloat(`${initialData?.latitude || ""}`),
   });
   const [coverPhotoPreview, setCoverPhotoPreview] = useState(null);
   const [coordinateSource, setCoordinateSource] = useState("owner");
@@ -89,7 +89,11 @@ const AddRestaurantForm = ({ onClose, onSubmit }) => {
 
     setLoading(true);
     try {
-      await onSubmit(formData);
+      if (onSave) {
+        await onSave(formData);
+      } else{
+        await onSubmit(formData);
+      }
     } catch (error) {
       console.error("Error adding restaurant:", error);
     } finally {
@@ -131,7 +135,7 @@ const AddRestaurantForm = ({ onClose, onSubmit }) => {
             mode === "dark" ? "border-gray-700" : "border-gray-200"
           }`}
         >
-          <h2 className="text-2xl font-bold">Add Restaurant</h2>
+          <h2 className="text-2xl font-bold">{`${(onSave)?`Edit`:`Create`}`} Restaurant</h2>
           <button
             onClick={onClose}
             className={`p-2 rounded-full transition ${
@@ -634,7 +638,7 @@ const AddRestaurantForm = ({ onClose, onSubmit }) => {
                   : "bg-green-500 hover:bg-green-600"
               }`}
             >
-              {loading ? "Creating..." : "Create Restaurant"}
+              {loading ? ((onSave)?"Editing":"Creating...") : ((onSave)?"Edit":"Create") + " Restaurant"}
             </button>
           </div>
         </form>

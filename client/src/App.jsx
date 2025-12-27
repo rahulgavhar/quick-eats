@@ -4,12 +4,13 @@ import SignUp from "./pages/SignUp.jsx";
 import SignIn from "./pages/SignIn.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Profile from "./components/Profile.jsx";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
-import { useDispatch } from "react-redux";
 import { fetchUserData } from "./redux/slices/userSlice.js";
 import PageNotFound from "./pages/PageNotFound.jsx";
+import Loader from "./components/General/Loader";
+import ErrorComponent from "./components/General/ErrorComponent";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -19,6 +20,10 @@ const App = () => {
   useEffect(() => {
     dispatch(fetchUserData());
   }, [dispatch]);
+
+  const handleRetry = () => {
+    dispatch(fetchUserData());
+  };
 
   // Apply global theme class on the <html> element so CSS can react to theme
   useEffect(() => {
@@ -32,6 +37,8 @@ const App = () => {
     }
   }, [mode]);
 
+  if (loading) return <Loader />;
+  if (error) return <ErrorComponent message={error} onRetry={handleRetry} />;
 
   return (
     <Routes>
