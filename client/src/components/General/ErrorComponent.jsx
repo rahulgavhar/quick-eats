@@ -25,7 +25,7 @@ const ErrorComponent = ({ message, onRetry }) => {
             mode === "dark" ? "text-gray-400" : "text-gray-600"
           }`}
         >
-          {message || "An unexpected error occurred. Please try again."}
+          {message.data || "An unexpected error occurred. Please try again."}
         </p>
         {onRetry && (
           <button

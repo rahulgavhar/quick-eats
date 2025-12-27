@@ -38,7 +38,6 @@ const App = () => {
   }, [mode]);
 
   if (loading) return <Loader />;
-  if (error) return <ErrorComponent message={error} onRetry={handleRetry} />;
 
   return (
     <Routes>
