@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
 
-const AddItemForm = ({ onClose, onSubmit }) => {
+const AddItemForm = ({ onClose, onSubmit, initial, onSave }) => {
   const { mode } = useSelector((state) => state.theme);
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category: "",
-    image: "🍕",
+    name: `${initial?.name || ""}`,
+    description: `${initial?.description || ""}`,
+    price: `${initial?.price || ""}`,
+    category: `${initial?.category || ""}`,
+    image: `${initial?.image || "🍕"}`,
     isVegetarian: false,
     isAvailable: true,
   });
@@ -47,8 +47,18 @@ const AddItemForm = ({ onClose, onSubmit }) => {
       return;
     }
 
+    if(formData.isVegetarian) {
+      formData.foodType = "Vegetarian";
+    } else {
+      formData.foodType = "Non-Vegetarian";
+    }
+
     setLoading(true);
     try {
+      if(initial) {
+        onSave(formData);
+        return;
+      }
       await onSubmit(formData);
     } catch (error) {
       console.error("Error adding item:", error);
@@ -81,13 +91,17 @@ const AddItemForm = ({ onClose, onSubmit }) => {
   ];
 
   const categories = [
-    "Appetizers",
+    "Appetizer",
     "Main Course",
-    "Desserts",
-    "Beverages",
-    "Sides",
-    "Soups",
-    "Salads",
+    "Dessert",
+    "Beverage",
+    "Side Dish",
+    "Salad",
+    "Soup",
+    "Snack",
+    "Breakfast",
+    "Lunch",
+    "Dinner",
   ];
 
   return (
@@ -103,7 +117,7 @@ const AddItemForm = ({ onClose, onSubmit }) => {
             mode === "dark" ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
           }`}
         >
-          <h2 className="text-2xl font-bold">Add New Item</h2>
+          <h2 className="text-2xl font-bold">{`${initial?"Edit":"Add"}`} Item</h2>
           <button
             onClick={onClose}
             className={`p-2 rounded-full transition ${
@@ -308,7 +322,7 @@ const AddItemForm = ({ onClose, onSubmit }) => {
                   : "bg-green-500 hover:bg-green-600"
               }`}
             >
-              {loading ? "Adding..." : "Add Item"}
+              {loading ? (initial ? "Editing..." : "Adding...") : (initial ? "Edit Item" : "Add Item")}
             </button>
           </div>
         </form>

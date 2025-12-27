@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { MdClose, MdEdit, MdDelete, MdAdd } from "react-icons/md";
 import { useSelector } from "react-redux";
 import AddRestaurantForm from "./AddRestaurantForm";
+import AddItemForm from "./AddItemForm";
 
 const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDeleteItem, onEdit }) => {
   const { mode } = useSelector((state) => state.theme);
   const [editingItem, setEditingItem] = useState(null);
-  const [showAddItem, setShowAddItem] = useState(false);
   const [showAddRestaurantForm, setShowAddRestaurantForm] = useState(false);
+  const [showAddItemForm, setShowAddItemForm] = useState(false);
 
   if (!restaurant) {
     return null;
@@ -98,8 +99,8 @@ const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDele
               <h3 className="font-semibold text-lg">Menu Items ({restaurant.items?.length || 0})</h3>
               <button
                 onClick={() => {
-                  setShowAddItem(true);
                   setEditingItem(null);
+                  setShowAddItemForm(true);
                 }}
                 className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
                   mode === "dark"
@@ -115,7 +116,7 @@ const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDele
               <div className="space-y-3">
                 {restaurant.items.map((item) => (
                   <div
-                    key={item.id}
+                    key={item._id}
                     className={`p-4 rounded-lg border flex items-center justify-between ${
                       mode === "dark"
                         ? "border-gray-700 bg-gray-700"
@@ -164,7 +165,7 @@ const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDele
                         <MdEdit size={18} />
                       </button>
                       <button
-                        onClick={() => onDeleteItem(item.id)}
+                        onClick={() => onDeleteItem(item._id)}
                         className={`p-2 rounded-lg transition ${
                           mode === "dark"
                             ? "bg-red-600 text-white hover:bg-red-700"
@@ -215,6 +216,24 @@ const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDele
             onEdit(updatedRestaurant);
             setShowAddRestaurantForm(false);
           }}
+        />
+      )}
+
+      {(editingItem || showAddItemForm) && (
+        <AddItemForm
+          initial={editingItem}
+          onClose={() => {
+            setShowAddItemForm(false);
+            setEditingItem(null);
+          }}
+          onSave={async (itemData) => {
+            await onUpdateItem(editingItem._id, { ...editingItem, ...itemData });
+            setShowAddItemForm(false);
+            setEditingItem(null);
+          }}
+          onSubmit={async (itemData) => {await onAddItem(itemData);
+            setShowAddItemForm(false);}
+          }
         />
       )}
     </>

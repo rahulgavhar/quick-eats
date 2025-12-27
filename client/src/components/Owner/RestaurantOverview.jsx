@@ -25,7 +25,7 @@ const RestaurantOverview = ({ restaurant, onManage, onDelete }) => {
   // for light mode bright image with dark overlay
   const bannerStyle = {
     backgroundImage: restaurant.image
-      ? `url(${restaurant.coverPhoto})`
+      ? `url(${restaurant.image})`
       : mode === "dark"
       ? "linear-gradient(135deg, #1f2937, #0f172a)"
       : "linear-gradient(135deg, #d1fae5, #14b8a6)",

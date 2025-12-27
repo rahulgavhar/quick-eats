@@ -25,7 +25,7 @@ const itemSchema = new mongoose.Schema(
     foodType: {
       type: String,
       required: true,
-      enum: ["Vegetarian", "Non-Vegetarian", "Vegan", "Gluten-Free", "Keto"],
+      enum: ["Vegetarian", "Non-Vegetarian"],
     },
     category: {
       type: String,
