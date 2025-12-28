@@ -248,139 +248,81 @@ export const listRestaurantsInState = async (req, res) => {
 };
 
 export const listRestaurantsNearLocation = async (req, res) => {
-  const BUCKET_SIZE_DEG = 0.005; // Approx. 500m
-  const EARTH_RADIUS_M = 6371000; // meters
+  const EARTH_RADIUS_M = 6378137; // WGS84 is correct
 
-  // Helper functions
-  const bucketCoord = (value) =>
-    Math.floor(value / BUCKET_SIZE_DEG) * BUCKET_SIZE_DEG;
-  const metersToDegrees = (meters) =>
-    (meters / EARTH_RADIUS_M) * (180 / Math.PI);
-  const toRad = (x) => (x * Math.PI) / 180;
-  const haversineMeters = (lat1, lon1, lat2, lon2) => {
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    return EARTH_RADIUS_M * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  };
-
-  // Input validation
   const { lon, lat, radius = 5000 } = req.query;
-  const longitude = parseFloat(lon);
-  const latitude = parseFloat(lat);
-  const radiusMeters = Math.min(+radius, 5000);
+  const longitude = Number(lon);
+  const latitude = Number(lat);
+  const radiusMeters = Math.min(Number(radius), 5000);
 
-  if (isNaN(longitude) || longitude < -180 || longitude > 180)
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
     return res.status(400).json({ error: "Invalid longitude" });
-  if (isNaN(latitude) || latitude < -90 || latitude > 90)
+  }
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
     return res.status(400).json({ error: "Invalid latitude" });
-  if (isNaN(radiusMeters) || radiusMeters <= 0)
-    return res.status(400).json({ error: "Radius must be positive" });
+  }
+  if (!Number.isFinite(radiusMeters) || radiusMeters <= 0) {
+    return res.status(400).json({ error: "Radius must be positive number" });
+  }
 
-  const radiusDeg = metersToDegrees(radiusMeters);
-  const MAX_BUCKET_RADIUS = 6; // ~3km with 0.005deg buckets
+  const cacheKey = `restaurants:${latitude.toFixed(2)}:${longitude.toFixed(2)}:${radiusMeters}`;
 
-  const bucketRadius = Math.min(
-    Math.ceil(radiusDeg / BUCKET_SIZE_DEG),
-    MAX_BUCKET_RADIUS
-  );
+  try {
+    const cached = await redisClientRestaurant.get(cacheKey);
+    if (cached !== null) {
+      return res.json({ 
+        restaurants: JSON.parse(cached),
+        cached: true
+      });
+    }
+  } catch (err) {
+    console.error("Cache read error:", err.message);
+  }
 
-  const baseLat = bucketCoord(latitude);
-  const baseLon = bucketCoord(longitude);
+  try {
+    const radiusRadians = radiusMeters / EARTH_RADIUS_M;
 
-  let baseTTL = radiusMeters <= 2000 ? 180 : 120;
-  const hour = new Date().getHours();
-  if ((hour >= 11 && hour <= 14) || (hour >= 18 && hour <= 22)) baseTTL = 60;
+    const restaurants = await Restaurant.find({
+      isOpen: true,
+      location: {
+        $geoWithin: {
+          $centerSphere: [[longitude, latitude], radiusRadians]
+        }
+      }
+    })
+      .select('-__v -createdAt -updatedAt')
+      .lean();
 
-  const results = new Map();
-  const bucketPromises = [];
-
-  // Function to fetch bucket with error handling
-  async function fetchBucket(bLat, bLon) {
-    const latIndex = Math.floor(bLat / BUCKET_SIZE_DEG);
-    const lonIndex = Math.floor(bLon / BUCKET_SIZE_DEG);
-
-    const bucketKey = `bucket:${latIndex}:${lonIndex}`;
-    const freqHashKey = "freq:buckets";
-    const freqField = `${latIndex}:${lonIndex}`;
+    const hour = new Date().getHours();
+    let ttl = 120;
+    
+    if (radiusMeters <= 2000) ttl = 180;
+    if ((hour >= 11 && hour <= 14) || (hour >= 18 && hour <= 22)) {
+      ttl = 60;
+    }
 
     try {
-      let bucketData = await redisClientRestaurant.get(bucketKey);
-
-      if (!bucketData) {
-        const docs = await Restaurant.find({
-          isOpen: true,
-          location: {
-            $geoWithin: {
-              $box: [
-                [bLon, bLat],
-                [bLon + BUCKET_SIZE_DEG, bLat + BUCKET_SIZE_DEG],
-              ],
-            },
-          },
-        }).lean();
-
-        // Increment frequency in a single hash
-        await redisClientRestaurant.hIncrBy(freqHashKey, freqField, 1);
-        await redisClientRestaurant.expire(freqHashKey, 300);
-
-        // TTL for bucket cache
-        const MAX_TTL = 300; // 5 minutes
-        const ttl = Math.min(baseTTL, MAX_TTL);
-        await redisClientRestaurant.setEx(bucketKey, ttl, JSON.stringify(docs));
-
-        bucketData = docs;
-      } else {
-        bucketData = JSON.parse(bucketData || "[]");
-      }
-
-      return bucketData;
-    } catch (err) {
-      console.error("Bucket fetch error:", bucketKey, err);
-      return [];
-    }
-  }
-
-  // Iterate over buckets intersecting circle
-  for (let i = -bucketRadius; i <= bucketRadius; i++) {
-    for (let j = -bucketRadius; j <= bucketRadius; j++) {
-      const bLat = baseLat + i * BUCKET_SIZE_DEG;
-      const bLon = baseLon + j * BUCKET_SIZE_DEG;
-      const bucketCenterLat = bLat + BUCKET_SIZE_DEG / 2;
-      const bucketCenterLon = bLon + BUCKET_SIZE_DEG / 2;
-      const distToCenter = haversineMeters(
-        latitude,
-        longitude,
-        bucketCenterLat,
-        bucketCenterLon
+      await redisClientRestaurant.setEx(
+        cacheKey, 
+        Math.min(ttl, 300),
+        JSON.stringify(restaurants)
       );
-
-      if (distToCenter - BUCKET_SIZE_DEG * 111000 <= radiusMeters) {
-        bucketPromises.push(fetchBucket(bLat, bLon));
-      }
+    } catch (err) {
+      console.error("Cache write error:", err.message);
     }
-  }
 
-  const bucketDataArray = await Promise.all(bucketPromises);
-  for (const bucketData of bucketDataArray) {
-    for (const r of bucketData) results.set(String(r._id), r);
+    return res.json({ 
+      restaurants,
+      cached: false
+    });
+    
+  } catch (err) {
+    console.error("Database query error:", err);
+    return res.status(500).json({ 
+      error: "Unable to fetch restaurants",
+      code: "DB_ERROR"
+    });
   }
-
-  // Final filtering by exact distance
-  const final = [];
-  for (const r of results.values()) {
-    const d = haversineMeters(
-      latitude,
-      longitude,
-      r.location.coordinates[1],
-      r.location.coordinates[0]
-    );
-    if (d <= radiusMeters) final.push(r);
-  }
-
-  res.json({ restaurants: final });
 };
 
 export const getAddressFromCoordinates = async (req, res) => {
