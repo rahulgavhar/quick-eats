@@ -14,7 +14,7 @@ restaurantRouter.get('/id/:restaurantId', getRestaurantById);
 restaurantRouter.get('/owner', isAuth, getOwnerRestaurant);
 restaurantRouter.get('/city/:city', listRestaurantsInCity);
 restaurantRouter.get('/state/:state', listRestaurantsInState);
-restaurantRouter.get('/nearby', listRestaurantsNearLocation);
+restaurantRouter.get('/nearby', isAuth, locationRateLimiter, listRestaurantsNearLocation);
 restaurantRouter.get('/address', isAuth, locationRateLimiter, getAddressFromCoordinates);
 
 export default restaurantRouter;

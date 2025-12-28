@@ -14,146 +14,19 @@ import CartItem from "./User/CartItem";
 import OrderSummary from "./User/OrderSummary";
 import Footer from "./General/Footer";
 import useGetCity from "../hooks/useGetCity";
+import useNearbyRestaurants from "../hooks/useNearbyRestaurants";
 import { toast } from "react-toastify";
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
   useGetCity();
+
   const { userData, city } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
 
-  // Sample restaurant data
-  const [restaurants] = useState([
-    {
-      id: 1,
-      name: "Burger Haven",
-      rating: 4.5,
-      deliveryTime: "30-40 min",
-      deliveryFee: "$2.99",
-      image: "🍔",
-      cuisine: "American",
-      foods: [
-        {
-          id: 101,
-          name: "Classic Burger",
-          price: 8.99,
-          image: "🍔",
-          description: "Juicy beef patty with lettuce and tomato",
-        },
-        {
-          id: 102,
-          name: "Cheese Burger",
-          price: 9.99,
-          image: "🧀",
-          description: "Double cheese with crispy bacon",
-        },
-        {
-          id: 103,
-          name: "Veggie Burger",
-          price: 7.99,
-          image: "🥬",
-          description: "Fresh vegetables and hummus",
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: "Pizza Palace",
-      rating: 4.7,
-      deliveryTime: "25-35 min",
-      deliveryFee: "$1.99",
-      image: "🍕",
-      cuisine: "Italian",
-      foods: [
-        {
-          id: 201,
-          name: "Margherita Pizza",
-          price: 12.99,
-          image: "🍕",
-          description: "Basil, mozzarella, and tomato",
-        },
-        {
-          id: 202,
-          name: "Pepperoni Pizza",
-          price: 14.99,
-          image: "🍕",
-          description: "Loaded with pepperoni slices",
-        },
-        {
-          id: 203,
-          name: "Veggie Pizza",
-          price: 11.99,
-          image: "🥦",
-          description: "Fresh vegetables and olive oil",
-        },
-      ],
-    },
-    {
-      id: 3,
-      name: "Sushi Supreme",
-      rating: 4.8,
-      deliveryTime: "20-30 min",
-      deliveryFee: "$3.99",
-      image: "🍣",
-      cuisine: "Japanese",
-      foods: [
-        {
-          id: 301,
-          name: "California Roll",
-          price: 10.99,
-          image: "🍣",
-          description: "Crab, avocado, and cucumber",
-        },
-        {
-          id: 302,
-          name: "Salmon Sashimi",
-          price: 15.99,
-          image: "🐟",
-          description: "Fresh salmon slices",
-        },
-        {
-          id: 303,
-          name: "Tuna Roll",
-          price: 12.99,
-          image: "🍣",
-          description: "Fresh tuna with rice",
-        },
-      ],
-    },
-    {
-      id: 4,
-      name: "Taco Fiesta",
-      rating: 4.6,
-      deliveryTime: "15-25 min",
-      deliveryFee: "$1.49",
-      image: "🌮",
-      cuisine: "Mexican",
-      foods: [
-        {
-          id: 401,
-          name: "Beef Tacos",
-          price: 8.99,
-          image: "🌮",
-          description: "Seasoned beef with salsa",
-        },
-        {
-          id: 402,
-          name: "Fish Tacos",
-          price: 10.99,
-          image: "🐟",
-          description: "Crispy fish with slaw",
-        },
-        {
-          id: 403,
-          name: "Chicken Burrito",
-          price: 9.99,
-          image: "🌯",
-          description: "Grilled chicken wrapped in tortilla",
-        },
-      ],
-    },
-  ]);
+  const { data: restaurants, loading, error } = useNearbyRestaurants();
 
+  // Local state
   const [cart, setCart] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [showCart, setShowCart] = useState(false);
@@ -170,7 +43,7 @@ const UserDashboard = () => {
   const roleLabel = userData?.role
     ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1)
     : null;
-  const locationName = city || "Mumbai";
+  const locationName = city || "";
 
   // Food suggestions for dynamic placeholder
   const foodSuggestions = [
@@ -355,11 +228,20 @@ const UserDashboard = () => {
                     }`}
                   >
                     <h2
-                      className={`text-3xl font-bold transition-colors duration-300 ${
+                      className={`text-3xl font-bold transition-colors duration-300 flex items-center gap-3 ${
                         mode === "dark" ? "text-white" : "text-gray-800"
                       }`}
                     >
-                      {selectedRestaurant.image} {selectedRestaurant.name}
+                      {selectedRestaurant.image && (selectedRestaurant.image.startsWith('http') || selectedRestaurant.image.startsWith('/')) ? (
+                        <img
+                          src={selectedRestaurant.image}
+                          alt={selectedRestaurant.name}
+                          className="w-12 h-12 rounded object-cover"
+                        />
+                      ) : (
+                        <span className="text-3xl">{selectedRestaurant.image}</span>
+                      )}
+                      {selectedRestaurant.name}
                     </h2>
                     <div
                       className={`flex max-[430px]:flex-col max-[430px]:gap-2 gap-6 mt-3 transition-colors duration-300 ${
@@ -394,15 +276,53 @@ const UserDashboard = () => {
                 >
                   Popular Restaurants Around You
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {filteredRestaurants.map((restaurant) => (
-                    <RestaurantCard
-                      key={restaurant.id}
-                      restaurant={restaurant}
-                      onClick={() => setSelectedRestaurant(restaurant)}
-                    />
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[...Array(4)].map((_, idx) => (
+                      <div
+                        key={idx}
+                        className={`rounded-lg shadow-md overflow-hidden border-t-4 border-green-500 animate-pulse ${
+                          mode === "dark" ? "bg-gray-800" : "bg-white"
+                        }`}
+                      >
+                        <div
+                          className={`h-32 transition-colors duration-300 ${
+                            mode === "dark"
+                              ? "bg-linear-to-b from-gray-700 to-gray-600"
+                              : "bg-linear-to-b from-green-100 to-cyan-100"
+                          }`}
+                        />
+                        <div className="p-4 space-y-3">
+                          <div
+                            className={`h-4 rounded transition-colors duration-300 ${
+                              mode === "dark" ? "bg-gray-700" : "bg-gray-200"
+                            }`}
+                          />
+                          <div
+                            className={`h-3 rounded w-2/3 transition-colors duration-300 ${
+                              mode === "dark" ? "bg-gray-700" : "bg-gray-200"
+                            }`}
+                          />
+                          <div
+                            className={`h-8 rounded transition-colors duration-300 ${
+                              mode === "dark" ? "bg-gray-700" : "bg-gray-200"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {filteredRestaurants.map((restaurant) => (
+                      <RestaurantCard
+                        key={restaurant.id}
+                        restaurant={restaurant}
+                        onClick={() => setSelectedRestaurant(restaurant)}
+                      />
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </>

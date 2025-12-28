@@ -3,6 +3,9 @@ import { useSelector } from "react-redux";
 
 const RestaurantCard = ({ restaurant, onClick }) => {
   const { mode } = useSelector((state) => state.theme);
+  
+  // Check if image is a URL or emoji
+  const isImageUrl = restaurant.image && (restaurant.image.startsWith('http') || restaurant.image.startsWith('/'));
 
   return (
     <div
@@ -12,13 +15,21 @@ const RestaurantCard = ({ restaurant, onClick }) => {
       }`}
     >
       <div
-        className={`p-8 text-6xl flex items-center justify-center min-h-30 transition-colors duration-300 ${
+        className={`p-0 text-6xl flex items-center justify-center min-h-30 transition-colors duration-300 overflow-hidden ${
           mode === "dark"
             ? "bg-linear-to-b from-gray-700 to-gray-600"
             : "bg-linear-to-b from-green-100 to-cyan-100"
         }`}
       >
-        {restaurant.image}
+        {isImageUrl ? (
+          <img
+            src={restaurant.image}
+            alt={restaurant.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          restaurant.image
+        )}
       </div>
       <div className="p-4">
         <h3

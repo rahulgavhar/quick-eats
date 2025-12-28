@@ -15,8 +15,10 @@ import ManageRestaurant from "./Owner/ManageRestaurant";
 import Footer from "./General/Footer";
 import { toast } from "react-toastify";
 import Loader from "./General/Loader";
+import useGetCity from "../hooks/useGetCity.jsx";
 
 const OwnerDashboard = () => {
+  useGetCity();
   const dispatch = useDispatch();
   const { userData } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);

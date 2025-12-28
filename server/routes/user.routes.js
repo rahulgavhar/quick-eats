@@ -7,7 +7,7 @@ import { locationRateLimiter } from '../middlewares/rateLimiter.js';
 
 userRouter.get('/current', isAuth, getCurrentUser);
 userRouter.put('/update', isAuth, updateUserProfile);
-userRouter.post('/get-city', isAuth, locationRateLimiter, getUserCity);
+userRouter.post('/get-city', locationRateLimiter, getUserCity);
 
 
 export default userRouter;

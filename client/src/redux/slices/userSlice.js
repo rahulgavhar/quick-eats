@@ -6,7 +6,11 @@ import axios from "axios";
 ============================ */
 const initialState = {
   userData: null,
+  cartItems: [],
+  coords: { lat: null, lon: null },
   city: null,
+  state: null,
+  fetchedAt: null,
   loading: false,
   error: null,
 };
@@ -69,6 +73,26 @@ const userSlice = createSlice({
     clearUserData: () => initialState,
     setCity: (state, action) => {
       state.city = action.payload;
+    },
+    setState: (state, action) => {
+      state.state = action.payload;
+    },
+    setCoords: (state, action) => {
+      state.coords = action.payload;
+    },
+    addToCart: (state, action) => {
+      state.cartItems.push(action.payload);
+    },
+    removeFromCart: (state, action) => {
+      state.cartItems = state.cartItems.filter(
+        (item, index) => index !== action.payload
+      );
+    },
+    clearCart: (state) => {
+      state.cartItems = [];
+    },
+    setFetchedAt: (state, action) => {
+      state.fetchedAt = action.payload;
     }
   },
   extraReducers: (builder) => {

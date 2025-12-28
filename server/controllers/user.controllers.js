@@ -10,9 +10,11 @@ export const getCurrentUser = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
     // exclude password field, otp, and other sensitive info
-    const user = await User.findById(userId).select(
-      "-password -otp -isOtpVerified -otpExpiry -otpRequests -otpRequestsResetTime"
-    ).lean();
+    const user = await User.findById(userId)
+      .select(
+        "-password -otp -isOtpVerified -otpExpiry -otpRequests -otpRequestsResetTime"
+      )
+      .lean();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -26,25 +28,30 @@ export const getCurrentUser = async (req, res) => {
 export const getUserCity = async (req, res) => {
   try {
     const { latitude, longitude } = req.body;
-
+    
     if (
       typeof latitude !== "number" ||
       typeof longitude !== "number" ||
-      latitude < -90 || latitude > 90 ||
-      longitude < -180 || longitude > 180
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
     ) {
       return res.status(400).json({ message: "Invalid coordinates" });
     }
 
-    const lat = latitude.toFixed(3);
-    const lon = longitude.toFixed(3);
-    const cacheKey = `${lat}:${lon}`;
+    const lat = latitude.toFixed(2);
+    const lon = longitude.toFixed(2);
+    const cacheKey = `geo:${lat}:${lon}`;
 
     try {
-      const cachedCity = await redisClient.get(cacheKey);
-      if (cachedCity) {
+      // Check Redis cache first for getting city and state
+      const cachedData = await redisClient.hGetAll(cacheKey);
+
+      if (cachedData.city && cachedData.state) {
         return res.status(200).json({
-          city: cachedCity,
+          city: cachedData.city,
+          state: cachedData.state,
           cached: true,
         });
       }
@@ -75,16 +82,22 @@ export const getUserCity = async (req, res) => {
       result.village ||
       result.county ||
       "Unknown";
+    const state = result.state || "Unknown";
 
     /* Cache the result in Redis */
     try {
-      await redisClient.setEx(cacheKey, 3600, city); // Cache for 1 hour
+      await redisClient.hSet(cacheKey, {
+        city,
+        state,
+      });
+      await redisClient.expire(cacheKey, 3600);
     } catch (err) {
       console.error("Failed to write to Redis");
     }
 
     return res.status(200).json({
       city,
+      state,
       cached: false,
     });
   } catch (error) {
@@ -114,12 +127,14 @@ export const updateUserProfile = async (req, res) => {
     if (mobile) updateData.mobile = mobile;
     if (countryCode) updateData.countryCode = countryCode;
     if (role) updateData.role = role;
-    
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: updateData },
       { new: true, runValidators: true }
-    ).select("-password -otp -isOtpVerified -otpExpiry -otpRequests -otpRequestsResetTime");
+    ).select(
+      "-password -otp -isOtpVerified -otpExpiry -otpRequests -otpRequestsResetTime"
+    );
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });

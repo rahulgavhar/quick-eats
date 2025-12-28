@@ -2,7 +2,7 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 export const locationRateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 5, // limit each user to 5 requests per windowMs
+  max: 15, // limit each user to 15 requests per windowMs
   keyGenerator: (req) => {
     return req.user?.id ?? ipKeyGenerator(req);
   },
