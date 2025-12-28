@@ -155,10 +155,10 @@ export const getRestaurantById = async (req, res) => {
       }).populate({
         path: "items",
         model: "Item",
-        lean: true,
+        options: { lean: true },
       });
     }
-    
+
     res.status(200).json({
       restaurant,
       profile: restaurantProfile,
@@ -291,12 +291,13 @@ export const listRestaurantsNearLocation = async (req, res) => {
   const results = new Map();
   const bucketPromises = [];
 
-  
-
   // Function to fetch bucket with error handling
   async function fetchBucket(bLat, bLon) {
-    const bucketKey = `bucket:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
-    const freqKey = `freq:${bucketKey}`;
+    const latIndex = Math.floor(bLat / BUCKET_SIZE_DEG);
+    const lonIndex = Math.floor(bLon / BUCKET_SIZE_DEG);
+
+    const bucketKey = `bucket:${latIndex}:${lonIndex}`;
+    const freqKey = `freq:${latIndex}:${lonIndex}`;
 
     try {
       let bucketData = await redisClientRestaurant.get(bucketKey);
@@ -319,6 +320,9 @@ export const listRestaurantsNearLocation = async (req, res) => {
         let ttl = baseTTL;
         if (hits > 20) ttl = Math.max(ttl, 240);
         if (hits > 50) ttl = Math.max(ttl, 360);
+        
+        const MAX_TTL = 300; // 5 min
+        ttl = Math.min(ttl, MAX_TTL);
 
         await redisClientRestaurant.setEx(bucketKey, ttl, JSON.stringify(docs));
         bucketData = docs;
@@ -370,7 +374,7 @@ export const listRestaurantsNearLocation = async (req, res) => {
   }
 
   res.json({ restaurants: final });
-}
+};
 
 export const getAddressFromCoordinates = async (req, res) => {
   try {
