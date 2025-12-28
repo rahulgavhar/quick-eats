@@ -290,7 +290,7 @@ export const listRestaurantsNearLocation = async (req, res) => {
         }
       }
     })
-      .select('-__v -createdAt -updatedAt')
+      .select('+_id')
       .lean();
 
     const hour = new Date().getHours();
