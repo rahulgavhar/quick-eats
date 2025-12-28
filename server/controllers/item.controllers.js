@@ -25,6 +25,11 @@ export const addItem = async (req, res) => {
         });
         await item.save();
 
+        await RestaurantProfile.findOneAndUpdate(
+            { restaurantId },
+            { $push: { items: item._id } }
+        );
+
         res.status(201).json({ message: 'Item added successfully', item });
     } catch (error) {
         console.error('Error adding item:', error);
@@ -80,6 +85,10 @@ export const deleteItem = async (req, res) => {
         if (!item) {
             return res.status(404).json({ message: 'Item not found' });
         }
+        await RestaurantProfile.findOneAndUpdate(
+            { restaurantId: item.restaurantId },
+            { $pull: { items: item._id } }
+        );
         res.status(200).json({ message: 'Item deleted successfully' });
     } catch (error) {
         console.error('Error deleting item:', error);

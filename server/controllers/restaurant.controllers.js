@@ -132,6 +132,7 @@ export const editRestaurant = async (req, res) => {
 export const getRestaurantById = async (req, res) => {
   try {
     const { restaurantId } = req.params;
+    const { shouldPopulate } = req.query;
 
     if (!restaurantId) {
       return res.status(400).json({ message: "Invalid restaurant ID" });
@@ -141,9 +142,22 @@ export const getRestaurantById = async (req, res) => {
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
     }
-    const restaurantProfile = await RestaurantProfile.findOne({
-      restaurantId: restaurant._id,
-    }).lean();
+
+    let restaurantProfile;
+
+    if (!shouldPopulate) {
+      restaurantProfile = await RestaurantProfile.findOne({
+        restaurantId: restaurant._id,
+      }).lean();
+    } else {
+      restaurantProfile = await RestaurantProfile.findOne({
+        restaurantId: restaurant._id,
+      }).populate({
+        path: "items",
+        model: "Item",
+        lean: true,
+      });
+    }
     
     res.status(200).json({
       restaurant,
@@ -192,6 +206,7 @@ export const deleteRestaurant = async (req, res) => {
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
     }
+    await Item.deleteMany({ restaurantId });
     await RestaurantProfile.findOneAndDelete({ restaurantId });
     res.status(200).json({ message: "Restaurant deleted successfully" });
   } catch (error) {

@@ -11,6 +11,7 @@ const initialState = {
   city: null,
   state: null,
   fetchedAt: null,
+  restaurants: [],
   loading: false,
   error: null,
 };
@@ -93,7 +94,10 @@ const userSlice = createSlice({
     },
     setFetchedAt: (state, action) => {
       state.fetchedAt = action.payload;
-    }
+    },
+    setRestaurants: (state, action) => {
+      state.restaurants = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
