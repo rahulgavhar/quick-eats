@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
 import useLonLat from "../../hooks/useLonLat";
-import MapPicker from "./MapPicker";
+import MapPicker from "../General/MapPicker";
 
 const AddRestaurantForm = ({ onClose, onSubmit, initialData, onSave }) => {
   const { mode } = useSelector((state) => state.theme);

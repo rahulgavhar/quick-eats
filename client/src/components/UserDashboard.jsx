@@ -14,6 +14,7 @@ import CartItem from "./User/CartItem";
 import OrderSummary from "./User/OrderSummary";
 import Footer from "./General/Footer";
 import useGetCity from "../hooks/useGetCity";
+import { toast } from "react-toastify";
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
@@ -209,6 +210,7 @@ const UserDashboard = () => {
     await dispatch(logoutUser()).unwrap();
     await persistor.purge();
     setShowProfileDropdown(false);
+    toast.success("Logged out successfully!");
   };
 
   const addToCart = (food, restaurant) => {

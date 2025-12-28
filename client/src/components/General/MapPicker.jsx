@@ -22,7 +22,7 @@ function MapClickHandler({ onLocationSelect }) {
   return null;
 }
 
-const MapPicker = ({ latitude, longitude, onLocationSelect }) => {
+const MapPicker = ({ latitude, longitude, onLocationSelect, immovable }) => {
   const { mode } = useSelector((state) => state.theme);
   const [position, setPosition] = useState(null);
   const mapRef = useRef(null);
@@ -38,7 +38,7 @@ const MapPicker = ({ latitude, longitude, onLocationSelect }) => {
   }, [latitude, longitude]);
 
   const handleLocationSelect = (lat, lng) => {
-    setPosition([lat, lng]);
+    if(immovable === null) setPosition([lat, lng]);
     onLocationSelect(lat.toFixed(6), lng.toFixed(6));
   };
 

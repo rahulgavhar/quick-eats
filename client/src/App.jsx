@@ -10,6 +10,7 @@ import Home from "./pages/Home.jsx";
 import { fetchUserData } from "./redux/slices/userSlice.js";
 import PageNotFound from "./pages/PageNotFound.jsx";
 import Loader from "./components/General/Loader";
+import Guest from "./pages/Guest.jsx";
 import ErrorComponent from "./components/General/ErrorComponent";
 
 const App = () => {
@@ -59,7 +60,7 @@ const App = () => {
       />
       <Route
         path="/"
-        element={!userData ? <Navigate to="/signin" /> : <Home />}
+        element={!userData ? <Guest /> : <Home />}
       />
       {/* 404 */}
       <Route
