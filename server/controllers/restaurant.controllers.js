@@ -280,7 +280,13 @@ export const listRestaurantsNearLocation = async (req, res) => {
     return res.status(400).json({ error: "Radius must be positive" });
 
   const radiusDeg = metersToDegrees(radiusMeters);
-  const bucketRadius = Math.ceil(radiusDeg / BUCKET_SIZE_DEG);
+  const MAX_BUCKET_RADIUS = 6; // ~3km with 0.005deg buckets
+
+  const bucketRadius = Math.min(
+    Math.ceil(radiusDeg / BUCKET_SIZE_DEG),
+    MAX_BUCKET_RADIUS
+  );
+
   const baseLat = bucketCoord(latitude);
   const baseLon = bucketCoord(longitude);
 
@@ -297,10 +303,12 @@ export const listRestaurantsNearLocation = async (req, res) => {
     const lonIndex = Math.floor(bLon / BUCKET_SIZE_DEG);
 
     const bucketKey = `bucket:${latIndex}:${lonIndex}`;
-    const freqKey = `freq:${latIndex}:${lonIndex}`;
+    const freqHashKey = "freq:buckets";
+    const freqField = `${latIndex}:${lonIndex}`;
 
     try {
       let bucketData = await redisClientRestaurant.get(bucketKey);
+
       if (!bucketData) {
         const docs = await Restaurant.find({
           isOpen: true,
@@ -314,24 +322,23 @@ export const listRestaurantsNearLocation = async (req, res) => {
           },
         }).lean();
 
-        const hits = await redisClientRestaurant.incr(freqKey);
-        await redisClientRestaurant.expire(freqKey, 300);
+        // Increment frequency in a single hash
+        await redisClientRestaurant.hIncrBy(freqHashKey, freqField, 1);
+        await redisClientRestaurant.expire(freqHashKey, 300);
 
-        let ttl = baseTTL;
-        if (hits > 20) ttl = Math.max(ttl, 240);
-        if (hits > 50) ttl = Math.max(ttl, 360);
-        
-        const MAX_TTL = 300; // 5 min
-        ttl = Math.min(ttl, MAX_TTL);
-
+        // TTL for bucket cache
+        const MAX_TTL = 300; // 5 minutes
+        const ttl = Math.min(baseTTL, MAX_TTL);
         await redisClientRestaurant.setEx(bucketKey, ttl, JSON.stringify(docs));
+
         bucketData = docs;
       } else {
-        bucketData = JSON.parse(bucketData);
+        bucketData = JSON.parse(bucketData || "[]");
       }
+
       return bucketData;
     } catch (err) {
-      console.error("Bucket fetch error:", err);
+      console.error("Bucket fetch error:", bucketKey, err);
       return [];
     }
   }
