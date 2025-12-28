@@ -265,14 +265,16 @@ export const listRestaurantsNearLocation = async (req, res) => {
     return res.status(400).json({ error: "Radius must be positive number" });
   }
 
-  const cacheKey = `restaurants:${latitude.toFixed(2)}:${longitude.toFixed(2)}:${radiusMeters}`;
+  const cacheKey = `restaurants:${latitude.toFixed(2)}:${longitude.toFixed(
+    2
+  )}:${radiusMeters}`;
 
   try {
     const cached = await redisClientRestaurant.get(cacheKey);
     if (cached !== null) {
-      return res.json({ 
+      return res.json({
         restaurants: JSON.parse(cached),
-        cached: true
+        cached: true,
       });
     }
   } catch (err) {
@@ -286,24 +288,26 @@ export const listRestaurantsNearLocation = async (req, res) => {
       isOpen: true,
       location: {
         $geoWithin: {
-          $centerSphere: [[longitude, latitude], radiusRadians]
-        }
-      }
+          $centerSphere: [[longitude, latitude], radiusRadians],
+        },
+      },
     })
-      .select('+_id')
+      .select("_id")
       .lean();
 
-    const hour = new Date().getHours();
-    let ttl = 120;
-    
-    if (radiusMeters <= 2000) ttl = 180;
-    if ((hour >= 11 && hour <= 14) || (hour >= 18 && hour <= 22)) {
-      ttl = 60;
-    }
+    const now = new Date();
+    const istHour = (now.getUTCHours() + 5.5) % 24;
+
+    let ttl = radiusMeters <= 2000 ? 180 : 120;
+
+    const isPeak =
+      (istHour >= 11 && istHour <= 14) || (istHour >= 18 && istHour <= 22);
+
+    if (isPeak) ttl = 60;
 
     try {
       await redisClientRestaurant.setEx(
-        cacheKey, 
+        cacheKey,
         Math.min(ttl, 300),
         JSON.stringify(restaurants)
       );
@@ -311,16 +315,15 @@ export const listRestaurantsNearLocation = async (req, res) => {
       console.error("Cache write error:", err.message);
     }
 
-    return res.json({ 
+    return res.json({
       restaurants,
-      cached: false
+      cached: false,
     });
-    
   } catch (err) {
     console.error("Database query error:", err);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: "Unable to fetch restaurants",
-      code: "DB_ERROR"
+      code: "DB_ERROR",
     });
   }
 };
