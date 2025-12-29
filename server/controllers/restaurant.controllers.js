@@ -247,7 +247,14 @@ export const listRestaurantsInState = async (req, res) => {
   }
 };
 
-export const listRestaurantsNearLocation = async (req, res) => {
+/* Naive Approach Summary:
+1. Input Validation: Validate longitude, latitude, and radius.
+2. Caching: Check Redis cache for existing results using a key based on rounded coordinates and radius.
+3. Database Query: If no cache, use MongoDB geospatial query to find open restaurants within the radius.
+4. Dynamic Cache Expiry: Set cache expiry based on radius and peak hours.
+5. Response: Return restaurant list, indicating if data was from cache.
+*/
+export const listRestaurantsNearLocation1 = async (req, res) => {
   const EARTH_RADIUS_M = 6378137; // WGS84 is correct
 
   const { lon, lat, radius = 5000 } = req.query;
@@ -326,6 +333,141 @@ export const listRestaurantsNearLocation = async (req, res) => {
       code: "DB_ERROR",
     });
   }
+};
+
+
+/* Enhanced Approach Summary:
+1. Bucketization: Divide the area into small buckets (~500m).
+2. Bucket Caching: Cache each bucket's restaurant data separately.
+3. Frequency Tracking: Track access frequency of each bucket to adjust cache expiry.
+4. Selective Fetching: Only fetch buckets intersecting the search circle.
+5. Final Filtering: Filter restaurants by exact distance after aggregating from buckets.
+*/
+export const listRestaurantsNearLocation2 = async (req, res) => {
+  const BUCKET_SIZE_DEG = 0.005; // Approx. 500m
+  const EARTH_RADIUS_M = 6371000; // meters
+
+  // Helper functions
+  const bucketCoord = (value) =>
+    Math.floor(value / BUCKET_SIZE_DEG) * BUCKET_SIZE_DEG;
+  const metersToDegrees = (meters) =>
+    (meters / EARTH_RADIUS_M) * (180 / Math.PI);
+  const toRad = (x) => (x * Math.PI) / 180;
+  const haversineMeters = (lat1, lon1, lat2, lon2) => {
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return EARTH_RADIUS_M * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  // Input validation
+  const { lon, lat, radius = 5000 } = req.query;
+  const longitude = parseFloat(lon);
+  const latitude = parseFloat(lat);
+  const radiusMeters = Math.min(+radius, 5000);
+
+  if (isNaN(longitude) || longitude < -180 || longitude > 180)
+    return res.status(400).json({ error: "Invalid longitude" });
+  if (isNaN(latitude) || latitude < -90 || latitude > 90)
+    return res.status(400).json({ error: "Invalid latitude" });
+  if (isNaN(radiusMeters) || radiusMeters <= 0)
+    return res.status(400).json({ error: "Radius must be positive" });
+
+  const radiusDeg = metersToDegrees(radiusMeters);
+  const bucketRadius = Math.ceil(radiusDeg / BUCKET_SIZE_DEG);
+  const baseLat = bucketCoord(latitude);
+  const baseLon = bucketCoord(longitude);
+
+  let baseTTL = radiusMeters <= 2000 ? 180 : 120;
+  const hour = new Date().getHours();
+  if ((hour >= 11 && hour <= 14) || (hour >= 18 && hour <= 22)) baseTTL = 60;
+
+  const results = new Map();
+  const bucketPromises = [];
+
+
+
+  // Function to fetch bucket with error handling
+  async function fetchBucket(bLat, bLon) {
+    const bucketKey = `bucket:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
+    const freqKey = `freq:${bucketKey}`;
+
+    try {
+      let bucketData = await redisClientRestaurant.get(bucketKey);
+      if (!bucketData) {
+        const docs = await Restaurant.find({
+          isOpen: true,
+          location: {
+            $geoWithin: {
+              $box: [
+                [bLon, bLat],
+                [bLon + BUCKET_SIZE_DEG, bLat + BUCKET_SIZE_DEG],
+              ],
+            },
+          },
+        })
+        .select("_id")
+        .lean();
+
+        const hits = await redisClientRestaurant.incr(freqKey);
+        await redisClientRestaurant.expire(freqKey, 300);
+
+        let ttl = baseTTL;
+        if (hits > 20) ttl = Math.max(ttl, 240);
+        if (hits > 50) ttl = Math.max(ttl, 360);
+
+        await redisClientRestaurant.setEx(bucketKey, ttl, JSON.stringify(docs));
+        bucketData = docs;
+      } else {
+        bucketData = JSON.parse(bucketData);
+      }
+      return bucketData;
+    } catch (err) {
+      console.error("Bucket fetch error:", err);
+      return [];
+    }
+  }
+
+  // Iterate over buckets intersecting circle
+  for (let i = -bucketRadius; i <= bucketRadius; i++) {
+    for (let j = -bucketRadius; j <= bucketRadius; j++) {
+      const bLat = baseLat + i * BUCKET_SIZE_DEG;
+      const bLon = baseLon + j * BUCKET_SIZE_DEG;
+      const bucketCenterLat = bLat + BUCKET_SIZE_DEG / 2;
+      const bucketCenterLon = bLon + BUCKET_SIZE_DEG / 2;
+      const distToCenter = haversineMeters(
+        latitude,
+        longitude,
+        bucketCenterLat,
+        bucketCenterLon
+      );
+
+      if (distToCenter - BUCKET_SIZE_DEG * 111000 <= radiusMeters) {
+        bucketPromises.push(fetchBucket(bLat, bLon));
+      }
+    }
+  }
+
+  const bucketDataArray = await Promise.all(bucketPromises);
+  for (const bucketData of bucketDataArray) {
+    for (const r of bucketData) results.set(String(r._id), r);
+  }
+
+  // Final filtering by exact distance
+  const final = [];
+  for (const r of results.values()) {
+    const d = haversineMeters(
+      latitude,
+      longitude,
+      r.location.coordinates[1],
+      r.location.coordinates[0]
+    );
+    if (d <= radiusMeters) final.push(r);
+  }
+
+  res.json({ restaurants: final });
 };
 
 export const getAddressFromCoordinates = async (req, res) => {
