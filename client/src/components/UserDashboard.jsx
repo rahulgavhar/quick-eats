@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutUser } from "../redux/slices/userSlice";
+import { logoutUser, userSliceActions } from "../redux/slices/userSlice";
 import { persistor } from "../redux/store";
 
 // Import child components
@@ -27,7 +27,7 @@ const UserDashboard = () => {
 
 
   // Local state
-  const [cart, setCart] = useState([]);
+  const cartItems = useSelector((state) => state.user.cartItems);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [showCart, setShowCart] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,55 +91,28 @@ const UserDashboard = () => {
   };
 
   const addToCart = (food, restaurant) => {
-    const existingItem = cart.find(
-      (item) => item.id === food.id && item.restaurantId === restaurant.id
+    dispatch(
+      userSliceActions.addOrIncrementCartItem({
+        ...food,
+        id: food.id,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+      })
     );
-
-    if (existingItem) {
-      setCart(
-        cart.map((item) =>
-          item.id === food.id && item.restaurantId === restaurant.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-    } else {
-      setCart([
-        ...cart,
-        {
-          ...food,
-          restaurantId: restaurant.id,
-          quantity: 1,
-          restaurantName: restaurant.name,
-        },
-      ]);
-    }
   };
 
   const removeFromCart = (foodId, restaurantId) => {
-    setCart(
-      cart.filter(
-        (item) => !(item.id === foodId && item.restaurantId === restaurantId)
-      )
-    );
+    dispatch(userSliceActions.removeCartItem({ id: foodId, restaurantId }));
   };
 
   const updateQuantity = (foodId, restaurantId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(foodId, restaurantId);
-    } else {
-      setCart(
-        cart.map((item) =>
-          item.id === foodId && item.restaurantId === restaurantId
-            ? { ...item, quantity }
-            : item
-        )
-      );
-    }
+    dispatch(
+      userSliceActions.updateCartQuantity({ id: foodId, restaurantId, quantity })
+    );
   };
 
   const calculateTotal = () => {
-    return cart
+    return cartItems
       .reduce((total, item) => total + item.price * item.quantity, 0)
       .toFixed(2);
   };
@@ -151,7 +124,7 @@ const UserDashboard = () => {
   );
 
   const handleCheckout = () => {
-    if (cart.length === 0) {
+    if (cartItems.length === 0) {
       alert("Your cart is empty!");
       return;
     }
@@ -163,7 +136,7 @@ const UserDashboard = () => {
     alert(
       `Order placed! Total: $${calculateTotal()}\nDelivery to: ${deliveryTo}`
     );
-    setCart([]);
+    dispatch(userSliceActions.clearCart());
     setShowCart(false);
   };
 
@@ -179,7 +152,7 @@ const UserDashboard = () => {
       <Header
         firstName={firstName}
         roleLabel={roleLabel}
-        cart={cart}
+        cart={cartItems}
         showCart={showCart}
         setShowCart={setShowCart}
         showProfileDropdown={showProfileDropdown}
@@ -199,7 +172,7 @@ const UserDashboard = () => {
       <MobileMenu
         showMobileMenu={showMobileMenu}
         setShowMobileMenu={setShowMobileMenu}
-        cart={cart}
+        cart={cartItems}
         setShowCart={setShowCart}
         handleLogout={handleLogout}
       />
@@ -526,7 +499,7 @@ const UserDashboard = () => {
                   >
                     Your Cart
                   </h2>
-                  {cart.length === 0 ? (
+                  {cartItems.length === 0 ? (
                     <p
                       className={`text-center py-8 transition-colors duration-300 ${
                         mode === "dark" ? "text-gray-400" : "text-gray-600"
@@ -536,7 +509,7 @@ const UserDashboard = () => {
                     </p>
                   ) : (
                     <div className="space-y-4">
-                      {cart.map((item) => (
+                      {cartItems.map((item) => (
                         <CartItem
                           key={`${item.id}-${item.restaurantId}`}
                           item={item}
@@ -551,7 +524,7 @@ const UserDashboard = () => {
 
               {/* Order Summary */}
               <OrderSummary
-                cart={cart}
+                cart={cartItems}
                 calculateTotal={calculateTotal}
                 onCheckout={handleCheckout}
                 locationName={locationName}

@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import useLonLat from "../hooks/useLonLat";
 import Footer from "../components/General/Footer";
-import Header from "../components/Guest/Header";
+import Header from "../components/Guest/GuestHeader";
 import MapPicker from "../components/General/MapPicker";
 import { userSliceActions } from "../redux/slices/userSlice";
 import { useDispatch } from "react-redux";
@@ -39,10 +39,10 @@ const Guest = () => {
 
         <Header />
 
-        <main className="max-w-6xl mx-auto px-6 pb-16 space-y-16">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-12 sm:pb-16 space-y-12 sm:space-y-16">
           {/* Hero */}
-          <section className="grid lg:grid-cols-2 gap-10 items-center pt-6">
-            <div className="space-y-6">
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 items-center pt-3 sm:pt-6">
+            <div className="space-y-4 sm:space-y-6">
               <p className="text-sm uppercase tracking-[0.2em] text-emerald-600 font-semibold">
                 Quick Eats
               </p>
@@ -179,7 +179,7 @@ const Guest = () => {
           </section>
 
           {/* Roles */}
-          <section className="grid md:grid-cols-3 gap-5">
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
             {["Users", "Restaurant Owners", "Delivery Partners"].map(
               (label) => (
                 <div
@@ -218,7 +218,7 @@ const Guest = () => {
           </section>
 
           {/* Highlights */}
-          <section className="grid lg:grid-cols-2 gap-8">
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             <div
               className={`rounded-3xl border shadow-md p-8 space-y-5 ${
                 mode === "dark"
@@ -337,7 +337,7 @@ const Guest = () => {
                 </h3>
               </div>
             </div>
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {[
                 "Browse nearby",
                 "Choose & pay",
@@ -391,7 +391,7 @@ const Guest = () => {
           </section>
 
           {/* CTA */}
-          <section className="rounded-3xl bg-linear-to-r from-emerald-600 to-cyan-600 text-white p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 shadow-lg">
+          <section className="rounded-2xl sm:rounded-3xl bg-linear-to-r from-emerald-600 to-cyan-600 text-white p-4 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6 shadow-lg">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] font-semibold">
                 Ready to taste?
@@ -403,16 +403,16 @@ const Guest = () => {
                 Sign up to order, list your kitchen, or start delivering today.
               </p>
             </div>
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-2 sm:gap-3 flex-wrap">
               <a
                 href="/signup"
-                className="px-5 py-3 rounded-xl bg-white text-emerald-700 font-semibold hover:bg-emerald-50 transition"
+                className="px-4 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base bg-white text-emerald-700 font-semibold hover:bg-emerald-50 transition"
               >
                 Create Account
               </a>
               <a
                 href="/signin"
-                className="px-5 py-3 rounded-xl border border-white/60 text-white font-semibold hover:bg-white/10 transition"
+                className="px-4 sm:px-5 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base border border-white/60 text-white font-semibold hover:bg-white/10 transition"
               >
                 Log In
               </a>

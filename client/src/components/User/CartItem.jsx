@@ -14,7 +14,19 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
     >
       {/* Image and Item Details */}
       <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto sm:flex-1 max-[270px]:flex-col">
-        <div className="text-3xl sm:text-4xl shrink-0">{item.image}</div>
+        <div
+          className={`shrink-0 h-16 w-16 rounded overflow-hidden flex items-center justify-center ${
+            mode === "dark"
+              ? "bg-linear-to-b from-gray-700 to-gray-600"
+              : "bg-linear-to-b from-green-100 to-cyan-100"
+          }`}
+        >
+          {item?.image && (String(item.image).startsWith("http") || String(item.image).startsWith("/")) ? (
+            <img src={item.image} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-3xl sm:text-4xl">{item?.name}</span>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <h3
             className={`font-bold text-sm sm:text-base transition-colors duration-300 truncate ${

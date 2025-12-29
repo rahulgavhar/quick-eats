@@ -247,12 +247,17 @@ export const listRestaurantsInState = async (req, res) => {
   }
 };
 
-/* Naive Approach Summary:
+/* Low Traffic Solution Summary:
 1. Input Validation: Validate longitude, latitude, and radius.
-2. Caching: Check Redis cache for existing results using a key based on rounded coordinates and radius.
+2. Caching: Check Redis cache for existing results using a key based on rounded coordinates(just inside Redis) and radius.
 3. Database Query: If no cache, use MongoDB geospatial query to find open restaurants within the radius.
 4. Dynamic Cache Expiry: Set cache expiry based on radius and peak hours.
 5. Response: Return restaurant list, indicating if data was from cache.
+
+Disadvantages:
+- User Centric Caching
+- High Redundancy for overlapping areas
+- Boundary Issues
 */
 export const listRestaurantsNearLocation1 = async (req, res) => {
   const EARTH_RADIUS_M = 6378137; // WGS84 is correct
@@ -335,23 +340,29 @@ export const listRestaurantsNearLocation1 = async (req, res) => {
   }
 };
 
-/* Enhanced Approach Summary:
+/* High Traffic Solution Summary: (Scalable & Efficient)
 1. Bucketization: Divide the area into buckets (~1000m).
 2. Bucket Caching: Cache each bucket's restaurant data separately.
 3. Frequency Tracking: Track access frequency of each bucket to adjust cache expiry.
 4. Selective Fetching: Only fetch buckets intersecting the search circle.
 5. Final Filtering: Filter restaurants by exact distance after aggregating from buckets.
+
+Advantages:
+- Efficient Query Radius ~1km (Moderate Cachekeys + Avoids Overfetching)
+- Asynchronous Cache Updates
 */
 export const listRestaurantsNearLocation2 = async (req, res) => {
-  const BUCKET_SIZE_DEG = 0.010;
+  const BUCKET_SIZE_DEG = 0.015; // ~1.67km at equator
   const EARTH_RADIUS_M = 6371000; // meters
   const MAX_BUCKET_RADIUS = 12; // safety cap
   const CONCURRENCY = 20; // limit parallel redis/mongo fetches
 
   // Helpers
   const toRad = (x) => (x * Math.PI) / 180;
-  const metersToDegrees = (meters) => (meters / EARTH_RADIUS_M) * (180 / Math.PI);
-  const bucketCoord = (value) => Math.floor(value / BUCKET_SIZE_DEG) * BUCKET_SIZE_DEG;
+  const metersToDegrees = (meters) =>
+    (meters / EARTH_RADIUS_M) * (180 / Math.PI);
+  const bucketCoord = (value) =>
+    Math.floor(value / BUCKET_SIZE_DEG) * BUCKET_SIZE_DEG;
 
   const haversineMeters = (lat1, lon1, lat2, lon2) => {
     const dLat = toRad(lat2 - lat1);
@@ -400,8 +411,18 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
         const bucketCenterLon = bLon + BUCKET_SIZE_DEG / 2;
 
         // compute center-to-query distance and bucket half-diagonal (center->corner)
-        const distToCenter = haversineMeters(latitude, longitude, bucketCenterLat, bucketCenterLon);
-        const cornerDist = haversineMeters(bucketCenterLat, bucketCenterLon, bLat, bLon);
+        const distToCenter = haversineMeters(
+          latitude,
+          longitude,
+          bucketCenterLat,
+          bucketCenterLon
+        );
+        const cornerDist = haversineMeters(
+          bucketCenterLat,
+          bucketCenterLon,
+          bLat,
+          bLon
+        );
 
         // include if circle intersects bucket (center distance <= radius + cornerDist)
         if (distToCenter <= radiusMeters + cornerDist) {
@@ -412,7 +433,9 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
 
     // Controlled concurrency fetcher for buckets
     async function fetchBucket(bLat, bLon) {
-      const bucketKey = `bucket:${BUCKET_SIZE_DEG}:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
+      const bucketKey = `bucket:${BUCKET_SIZE_DEG}:${bLat.toFixed(
+        3
+      )}:${bLon.toFixed(3)}`;
       const freqKey = `freq:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
 
       try {
@@ -443,33 +466,31 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
           .select({ _id: 1, location: 1 })
           .lean();
 
-        // Atomically increment frequency + set TTL (multi)
-        try {
-          await redisClientRestaurant.multi()
-            .incr(freqKey)
-            .expire(freqKey, 300)
-            .exec();
-        } catch (e) {
-          // best-effort: don't fail the whole request because of redis multi failing
-          console.warn("Redis freq multi failed:", e);
-        }
+        setImmediate(async () => {
+          try {
+            // Increment frequency
+            await redisClientRestaurant
+              .multi()
+              .incr(freqKey)
+              .expire(freqKey, 300)
+              .exec();
 
-        // Compute adaptive TTL
-        let ttl = baseTTL;
-        try {
-          const hits = Number(await redisClientRestaurant.get(freqKey)) || 0;
-          if (hits > 20) ttl = Math.max(ttl, 240);
-          if (hits > 50) ttl = Math.max(ttl, 360);
-        } catch (e) {
-          // ignore read errors, keep base ttl
-        }
+            // Compute adaptive TTL
+            let ttl = baseTTL;
+            const hits = Number(await redisClientRestaurant.get(freqKey)) || 0;
+            if (hits > 20) ttl = Math.max(ttl, 240);
+            if (hits > 50) ttl = Math.max(ttl, 360);
 
-        // Cache minimal doc set
-        try {
-          await redisClientRestaurant.setEx(bucketKey, ttl, JSON.stringify(docs));
-        } catch (e) {
-          console.warn("Redis setEx failed for", bucketKey, e);
-        }
+            // Cache docs
+            await redisClientRestaurant.setEx(
+              bucketKey,
+              ttl,
+              JSON.stringify(docs)
+            );
+          } catch (e) {
+            console.warn("Async cache update failed:", bucketKey, e);
+          }
+        });
 
         return docs || [];
       } catch (err) {
@@ -515,7 +536,7 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
     const skip = (pageNum - 1) * pageLimit;
     const paginatedRestaurants = final.slice(skip, skip + pageLimit);
 
-    return res.json({ 
+    return res.json({
       restaurants: paginatedRestaurants,
       pagination: {
         currentPage: pageNum,
@@ -523,8 +544,8 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
         totalRestaurants,
         restaurantsPerPage: pageLimit,
         hasNextPage: pageNum < totalPages,
-        hasPreviousPage: pageNum > 1
-      }
+        hasPreviousPage: pageNum > 1,
+      },
     });
   } catch (err) {
     console.error("listRestaurantsNearLocation2 error:", err);

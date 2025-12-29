@@ -81,12 +81,48 @@ const userSlice = createSlice({
     setCoords: (state, action) => {
       state.coords = action.payload;
     },
+    // Legacy actions kept for compatibility
     addToCart: (state, action) => {
       state.cartItems.push(action.payload);
     },
     removeFromCart: (state, action) => {
       state.cartItems = state.cartItems.filter(
         (item, index) => index !== action.payload
+      );
+    },
+    // New robust cart actions
+    addOrIncrementCartItem: (state, action) => {
+      const { id, restaurantId } = action.payload || {};
+      if (!id || !restaurantId) return;
+      const idx = state.cartItems.findIndex(
+        (i) => i.id === id && i.restaurantId === restaurantId
+      );
+      if (idx >= 0) {
+        state.cartItems[idx].quantity = (state.cartItems[idx].quantity || 1) + 1;
+      } else {
+        const quantity = action.payload.quantity && action.payload.quantity > 0 ? action.payload.quantity : 1;
+        state.cartItems.push({ ...action.payload, quantity });
+      }
+    },
+    updateCartQuantity: (state, action) => {
+      const { id, restaurantId, quantity } = action.payload || {};
+      if (!id || !restaurantId) return;
+      const idx = state.cartItems.findIndex(
+        (i) => i.id === id && i.restaurantId === restaurantId
+      );
+      if (idx >= 0) {
+        if (quantity <= 0) {
+          state.cartItems.splice(idx, 1);
+        } else {
+          state.cartItems[idx].quantity = quantity;
+        }
+      }
+    },
+    removeCartItem: (state, action) => {
+      const { id, restaurantId } = action.payload || {};
+      if (!id || !restaurantId) return;
+      state.cartItems = state.cartItems.filter(
+        (i) => !(i.id === id && i.restaurantId === restaurantId)
       );
     },
     clearCart: (state) => {
