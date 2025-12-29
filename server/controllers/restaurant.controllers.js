@@ -335,7 +335,6 @@ export const listRestaurantsNearLocation1 = async (req, res) => {
   }
 };
 
-
 /* Enhanced Approach Summary:
 1. Bucketization: Divide the area into small buckets (~500m).
 2. Bucket Caching: Cache each bucket's restaurant data separately.
@@ -387,8 +386,6 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
   const results = new Map();
   const bucketPromises = [];
 
-
-
   // Function to fetch bucket with error handling
   async function fetchBucket(bLat, bLon) {
     const bucketKey = `bucket:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
@@ -408,8 +405,8 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
             },
           },
         })
-        .select("_id")
-        .lean();
+          .select("_id location")
+          .lean();
 
         const hits = await redisClientRestaurant.incr(freqKey);
         await redisClientRestaurant.expire(freqKey, 300);
