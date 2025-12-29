@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { userSliceActions } from "../redux/slices/userSlice.js";
@@ -10,112 +10,136 @@ const useNearbyRestaurants = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalRestaurants: 0,
+    restaurantsPerPage: 8,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+  const [coordinates, setCoordinates] = useState(null);
+  const hasInitialFetchRef = useRef(false);
 
+  const fetchRestaurants = useCallback(
+    async (page = 1) => {
+      if (!coordinates) return;
+
+      const { latitude, longitude } = coordinates;
+      const apiURL = import.meta.env.VITE_API_URL;
+      if (!apiURL) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await axios.get(`${apiURL}/api/restaurants/nearby`, {
+          params: { 
+            lat: latitude, 
+            lon: longitude,
+            page,
+            limit: 8
+          },
+          withCredentials: true,
+        });
+
+        const enrichedRestaurants = await Promise.all(
+          response.data.restaurants.map(async (restaurant) => {
+            try {
+              const res = await axios.get(
+                `${apiURL}/api/restaurants/id/${restaurant._id}`,
+                {
+                  withCredentials: true,
+                }
+              );
+
+              return {
+                id: res.data.restaurant._id,
+                name: res.data.restaurant.name,
+                rating: res.data.restaurant.rating,
+                deliveryTime: "30-40 min",
+                deliveryFee: "$2.99",
+                image: res.data.profile.image,
+                cuisine: res.data.profile.cuisine,
+                foods: [],
+              };
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        setData(enrichedRestaurants.filter(Boolean));
+        setPagination(response.data.pagination || {});
+        
+        // Cache on first page only
+        if (page === 1) {
+          dispatch(
+            userSliceActions.setRestaurants(
+              enrichedRestaurants.filter(Boolean)
+            )
+          );
+          dispatch(userSliceActions.setFetchedAt(Date.now()));
+        }
+
+        setLoading(false);
+      } catch (error) {
+        if (!axios.isCancel(error)) {
+          setError(error);
+          setLoading(false);
+        }
+      }
+    },
+    [coordinates]
+  );
+
+  const goToPage = useCallback((page) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      fetchRestaurants(page);
+    }
+  }, [pagination.totalPages, fetchRestaurants]);
+
+  const nextPage = useCallback(() => {
+    if (pagination.hasNextPage) {
+      fetchRestaurants(pagination.currentPage + 1);
+    }
+  }, [pagination.currentPage, pagination.hasNextPage, fetchRestaurants]);
+
+  const previousPage = useCallback(() => {
+    if (pagination.hasPreviousPage) {
+      fetchRestaurants(pagination.currentPage - 1);
+    }
+  }, [pagination.currentPage, pagination.hasPreviousPage, fetchRestaurants]);
+
+  // Get coordinates on mount
   useEffect(() => {
     let isMounted = true;
 
-    setLoading(true);
-    const controller = new AbortController();
-
     if (!navigator.geolocation) {
-      console.error("Geolocation not supported");
-      setLoading(false);
-      return;
-    }
-
-    const apiURL = import.meta.env.VITE_API_URL;
-    if (!apiURL) {
-      console.error("API_URL not defined");
       setLoading(false);
       return;
     }
 
     const currentTime = Date.now();
-    // Fetch if never fetched before or last fetch was more than 1 minutes ago
-    if (fetchedAt && currentTime - fetchedAt < 1 * 60 * 1000) {
+
+    if (fetchedAt && currentTime - fetchedAt < 60 * 1000) {
       if (!window.location.hostname.includes("localhost")) {
-        console.log("1 request per minute limit enforced");
         setData(restaurants);
         setLoading(false);
+        hasInitialFetchRef.current = true;
         return;
       }
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-
-        dispatch(userSliceActions.setFetchedAt(currentTime));
-
-        try {
-          const response = await axios.get(`${apiURL}/api/restaurants/nearby`, {
-            params: { lat: latitude, lon: longitude },
-            withCredentials: true,
-            signal: controller.signal,
-          });
-
-          // Attach restaurantProfileData to each restaurant
-          response.data.restaurants = await Promise.all(
-            response.data.restaurants.map(async (restaurant) => {
-              try {
-                const res = await axios.get(
-                  `${apiURL}/api/restaurants/id/${restaurant._id}`,
-                  {
-                    params: {
-                      shouldPopulate: true,
-                    },
-                    withCredentials: true,
-                    signal: controller.signal,
-                  }
-                );
-
-                const itemsRes = res.data.profile.items;
-
-                const finalRestaurant = {
-                  name: res.data.restaurant.name,
-                  rating: res.data.restaurant.rating,
-                  deliveryTime: "30-40 min",
-                  deliveryFee: "$2.99",
-                  image: res.data.profile.image,
-                  cuisine: res.data.profile.cuisine,
-                  foods: itemsRes.map((item) => ({
-                    id: item._id,
-                    name: item.name,
-                    price: item.price,
-                    image: item.image,
-                    description: item.description,
-                  })),
-                  id: res.data.restaurant._id,
-                };
-
-                return finalRestaurant;
-              } catch (err) {
-                console.error("Error fetching restaurant profile:", err);
-                return null;
-              }
-            })
-          );
-
-          if (response.data && response.data.restaurants) {
-            if (!isMounted) return;
-            setData(response.data.restaurants);
-            dispatch(
-              userSliceActions.setRestaurants(response.data.restaurants)
-            );
-            setLoading(false);
-          }
-        } catch (error) {
-          if (axios.isCancel(error)) {
-            console.log("Request cancelled:", error.message);
-            return;
-          }
-          console.error("Error fetching city data:", error);
-          setError(error);
-          setLoading(false);
+      (position) => {
+        if (isMounted) {
+          const { latitude, longitude } = position.coords;
+          setCoordinates({ latitude, longitude });
         }
       },
       (error) => {
-        console.error("Geolocation error:", error.message);
         setError(error);
         setLoading(false);
       }
@@ -123,11 +147,26 @@ const useNearbyRestaurants = () => {
 
     return () => {
       isMounted = false;
-      controller.abort();
     };
-  }, [dispatch]);
+  }, []);
 
-  return { data, loading, error };
+  // Fetch restaurants when coordinates change (only once)
+  useEffect(() => {
+    if (coordinates && !hasInitialFetchRef.current) {
+      hasInitialFetchRef.current = true;
+      fetchRestaurants(1);
+    }
+  }, [coordinates]);
+
+  return { 
+    data, 
+    loading, 
+    error,
+    pagination,
+    goToPage,
+    nextPage,
+    previousPage
+  };
 };
 
 export default useNearbyRestaurants;

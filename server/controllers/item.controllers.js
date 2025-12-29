@@ -99,11 +99,33 @@ export const deleteItem = async (req, res) => {
 export const getItemsByRestaurant = async (req, res) => {
     try {
         const restaurantId = req.query.restaurantId;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 6;
+        
         if(!restaurantId) {
             return res.status(400).json({ message: 'Restaurant ID is required' });
         }
-        const items = await Item.find({ restaurantId });
-        res.status(200).json({ items });
+
+        const skip = (page - 1) * limit;
+        const items = await Item.find({ restaurantId })
+            .limit(limit)
+            .skip(skip)
+            .lean();
+        
+        const totalItems = await Item.countDocuments({ restaurantId });
+        const totalPages = Math.ceil(totalItems / limit);
+
+        res.status(200).json({ 
+            items,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalItems,
+                itemsPerPage: limit,
+                hasNextPage: page < totalPages,
+                hasPreviousPage: page > 1
+            }
+        });
     } catch (error) {
         console.error('Error fetching items by restaurant:', error);
         res.status(500).json({ message: 'Internal server error' });

@@ -15,6 +15,7 @@ import OrderSummary from "./User/OrderSummary";
 import Footer from "./General/Footer";
 import useGetCity from "../hooks/useGetCity";
 import useNearbyRestaurants from "../hooks/useNearbyRestaurants";
+import useGetItems from "../hooks/useGetItems";
 import { toast } from "react-toastify";
 
 const UserDashboard = () => {
@@ -24,7 +25,6 @@ const UserDashboard = () => {
   const { userData, city } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
 
-  const { data: restaurants, loading, error } = useNearbyRestaurants();
 
   // Local state
   const [cart, setCart] = useState([]);
@@ -35,6 +35,10 @@ const UserDashboard = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const dropdownRef = useRef(null);
+
+  
+  const { data: restaurants, loading, error, pagination: restaurantPagination, nextPage: nextRestaurantPage, previousPage: previousRestaurantPage, goToPage: goToRestaurantPage } = useNearbyRestaurants();
+  const { items: restaurantItems, loading: itemsLoading, pagination, nextPage, previousPage, goToPage } = useGetItems(selectedRestaurant?.id);
 
   // Derived user details from store with safe fallbacks
   const firstName = (
@@ -257,14 +261,128 @@ const UserDashboard = () => {
 
                 {/* Food Items Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {selectedRestaurant.foods.map((food) => (
-                    <FoodCard
-                      key={food.id}
-                      food={food}
-                      onAddToCart={() => addToCart(food, selectedRestaurant)}
-                    />
-                  ))}
+                  {itemsLoading ? (
+                    <>
+                      {[...Array(6)].map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={`rounded-lg shadow-md overflow-hidden border-t-4 border-green-500 animate-pulse ${
+                            mode === "dark" ? "bg-gray-800" : "bg-white"
+                          }`}
+                        >
+                          <div
+                            className={`h-40 transition-colors duration-300 ${
+                              mode === "dark"
+                                ? "bg-linear-to-b from-gray-700 to-gray-600"
+                                : "bg-linear-to-b from-green-100 to-cyan-100"
+                            }`}
+                          />
+                          <div className="p-4 space-y-3">
+                            <div
+                              className={`h-4 rounded transition-colors duration-300 ${
+                                mode === "dark" ? "bg-gray-700" : "bg-gray-200"
+                              }`}
+                            />
+                            <div
+                              className={`h-3 rounded w-2/3 transition-colors duration-300 ${
+                                mode === "dark" ? "bg-gray-700" : "bg-gray-200"
+                              }`}
+                            />
+                            <div
+                              className={`h-8 rounded transition-colors duration-300 ${
+                                mode === "dark" ? "bg-gray-700" : "bg-gray-200"
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : restaurantItems.length > 0 ? (
+                    <>
+                      {restaurantItems.map((food) => (
+                        <FoodCard
+                          key={food._id || food.id}
+                          food={{
+                            id: food._id || food.id,
+                            ...food
+                          }}
+                          onAddToCart={() => addToCart({
+                            id: food._id || food.id,
+                            ...food
+                          }, selectedRestaurant)}
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <div
+                      className={`col-span-full text-center py-12 rounded-lg ${
+                        mode === "dark" ? "bg-gray-800" : "bg-white"
+                      }`}
+                    >
+                      <p
+                        className={`transition-colors duration-300 ${
+                          mode === "dark" ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        No items available at this restaurant.
+                      </p>
+                    </div>
+                  )}
                 </div>
+
+                {/* Pagination Controls */}
+                {restaurantItems.length > 0 && pagination.totalPages > 1 && (
+                  <div className="mt-8 flex justify-center items-center gap-4">
+                    <button
+                      onClick={previousPage}
+                      disabled={!pagination.hasPreviousPage}
+                      className={`px-6 py-2 rounded-lg font-semibold transition ${
+                        pagination.hasPreviousPage
+                          ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                          : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      }`}
+                    >
+                      ← Previous
+                    </button>
+
+                    <div
+                      className={`flex gap-2 items-center ${
+                        mode === "dark" ? "text-white" : "text-gray-800"
+                      }`}
+                    >
+                      {[...Array(pagination.totalPages)].map((_, idx) => {
+                        const pageNum = idx + 1;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => goToPage(pageNum)}
+                            className={`px-3 py-1 rounded transition ${
+                              pagination.currentPage === pageNum
+                                ? "bg-green-500 text-white font-bold"
+                                : mode === "dark"
+                                ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={nextPage}
+                      disabled={!pagination.hasNextPage}
+                      className={`px-6 py-2 rounded-lg font-semibold transition ${
+                        pagination.hasNextPage
+                          ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                          : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      }`}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <>
@@ -313,15 +431,71 @@ const UserDashboard = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {filteredRestaurants.map((restaurant) => (
-                      <RestaurantCard
-                        key={restaurant.id}
-                        restaurant={restaurant}
-                        onClick={() => setSelectedRestaurant(restaurant)}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {filteredRestaurants.map((restaurant) => (
+                        <RestaurantCard
+                          key={restaurant.id}
+                          restaurant={restaurant}
+                          onClick={() => setSelectedRestaurant(restaurant)}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Restaurant Pagination Controls */}
+                    {restaurantPagination.totalPages > 1 && (
+                      <div className="mt-8 flex justify-center items-center gap-4">
+                        <button
+                          onClick={previousRestaurantPage}
+                          disabled={!restaurantPagination.hasPreviousPage}
+                          className={`px-6 py-2 rounded-lg font-semibold transition ${
+                            restaurantPagination.hasPreviousPage
+                              ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                              : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          }`}
+                        >
+                          ← Previous
+                        </button>
+
+                        <div
+                          className={`flex gap-2 items-center ${
+                            mode === "dark" ? "text-white" : "text-gray-800"
+                          }`}
+                        >
+                          {[...Array(restaurantPagination.totalPages)].map((_, idx) => {
+                            const pageNum = idx + 1;
+                            return (
+                              <button
+                                key={pageNum}
+                                onClick={() => goToRestaurantPage(pageNum)}
+                                className={`px-3 py-1 rounded transition ${
+                                  restaurantPagination.currentPage === pageNum
+                                    ? "bg-green-500 text-white font-bold"
+                                    : mode === "dark"
+                                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                              >
+                                {pageNum}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <button
+                          onClick={nextRestaurantPage}
+                          disabled={!restaurantPagination.hasNextPage}
+                          className={`px-6 py-2 rounded-lg font-semibold transition ${
+                            restaurantPagination.hasNextPage
+                              ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                              : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          }`}
+                        >
+                          Next →
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}
