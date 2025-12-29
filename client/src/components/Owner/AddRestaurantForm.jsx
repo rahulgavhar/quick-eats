@@ -381,7 +381,6 @@ const AddRestaurantForm = ({ onClose, onSubmit, initialData, onSave }) => {
                   <div className="space-y-2">
                     <img
                       src={coverPhotoPreview}
-                      alt="Preview"
                       className="h-32 w-full object-cover rounded-lg mx-auto"
                     />
                     <p className="text-xs opacity-80">Click to change photo</p>

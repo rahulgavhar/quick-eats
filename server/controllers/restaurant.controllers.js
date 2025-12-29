@@ -336,16 +336,15 @@ export const listRestaurantsNearLocation1 = async (req, res) => {
 };
 
 /* Enhanced Approach Summary:
-1. Bucketization: Divide the area into small buckets (~500m).
+1. Bucketization: Divide the area into buckets (~1000m).
 2. Bucket Caching: Cache each bucket's restaurant data separately.
 3. Frequency Tracking: Track access frequency of each bucket to adjust cache expiry.
 4. Selective Fetching: Only fetch buckets intersecting the search circle.
 5. Final Filtering: Filter restaurants by exact distance after aggregating from buckets.
 */
 export const listRestaurantsNearLocation2 = async (req, res) => {
-  const BUCKET_SIZE_DEG = 0.005; // ~500m
+  const BUCKET_SIZE_DEG = 0.010;
   const EARTH_RADIUS_M = 6371000; // meters
-  const CACHE_VERSION = "v3";
   const MAX_BUCKET_RADIUS = 12; // safety cap
   const CONCURRENCY = 20; // limit parallel redis/mongo fetches
 
@@ -413,8 +412,8 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
 
     // Controlled concurrency fetcher for buckets
     async function fetchBucket(bLat, bLon) {
-      const bucketKey = `${CACHE_VERSION}:bucket:${BUCKET_SIZE_DEG}:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
-      const freqKey = `${CACHE_VERSION}:freq:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
+      const bucketKey = `bucket:${BUCKET_SIZE_DEG}:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
+      const freqKey = `freq:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
 
       try {
         const raw = await redisClientRestaurant.get(bucketKey);

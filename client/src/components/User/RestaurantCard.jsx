@@ -15,7 +15,7 @@ const RestaurantCard = ({ restaurant, onClick }) => {
       }`}
     >
       <div
-        className={`p-0 text-6xl flex items-center justify-center min-h-30 transition-colors duration-300 overflow-hidden ${
+        className={`p-0 text-6xl flex items-center justify-center h-40 w-full transition-colors duration-300 overflow-hidden ${
           mode === "dark"
             ? "bg-linear-to-b from-gray-700 to-gray-600"
             : "bg-linear-to-b from-green-100 to-cyan-100"
@@ -24,7 +24,6 @@ const RestaurantCard = ({ restaurant, onClick }) => {
         {isImageUrl ? (
           <img
             src={restaurant.image}
-            alt={restaurant.name}
             className="w-full h-full object-cover"
           />
         ) : (

@@ -239,7 +239,6 @@ const UserDashboard = () => {
                       {selectedRestaurant.image && (selectedRestaurant.image.startsWith('http') || selectedRestaurant.image.startsWith('/')) ? (
                         <img
                           src={selectedRestaurant.image}
-                          alt={selectedRestaurant.name}
                           className="w-12 h-12 rounded object-cover"
                         />
                       ) : (

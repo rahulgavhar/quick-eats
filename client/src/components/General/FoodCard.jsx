@@ -11,13 +11,20 @@ const FoodCard = ({ food, onAddToCart }) => {
       }`}
     >
       <div
-        className={`p-8 text-5xl flex items-center justify-center min-h-37.5 transition-colors duration-300 ${
+        className={`p-0 flex items-center justify-center h-40 w-full transition-colors duration-300 overflow-hidden ${
           mode === "dark"
             ? "bg-linear-to-b from-gray-700 to-gray-600"
             : "bg-linear-to-b from-green-100 to-cyan-100"
         }`}
       >
-        {food.image}
+        {food?.image && (String(food.image).startsWith("http") || String(food.image).startsWith("/")) ? (
+          <img
+            src={food.image}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span className="text-5xl">{food?.image}</span>
+        )}
       </div>
       <div className="p-4">
         <h3
