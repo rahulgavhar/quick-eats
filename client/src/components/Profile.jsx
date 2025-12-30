@@ -664,8 +664,8 @@ const Profile = () => {
                         : "border-gray-300 bg-gray-50 cursor-not-allowed"
                     }`}
                   >
-                    {countryCodes.map((country) => (
-                      <option key={country.code} value={country.code}>
+                    {countryCodes.map((country, index) => (
+                      <option key={index} value={country.code}>
                         {country.flag} {country.country} ({country.code})
                       </option>
                     ))}

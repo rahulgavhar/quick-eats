@@ -10,6 +10,7 @@ const useNearbyRestaurants = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [allRestaurants, setAllRestaurants] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -44,6 +45,8 @@ const useNearbyRestaurants = () => {
           withCredentials: true,
         });
 
+        setAllRestaurants(response.data.allRestaurants || []);
+
         const enrichedRestaurants = await Promise.all(
           response.data.restaurants.map(async (restaurant) => {
             try {
@@ -62,6 +65,7 @@ const useNearbyRestaurants = () => {
                 deliveryFee: "$2.99",
                 image: res.data.profile.image,
                 cuisine: res.data.profile.cuisine,
+                address: res.data.profile.address,
                 foods: [],
               };
             } catch {
@@ -165,7 +169,8 @@ const useNearbyRestaurants = () => {
     pagination,
     goToPage,
     nextPage,
-    previousPage
+    previousPage,
+    allRestaurants
   };
 };
 

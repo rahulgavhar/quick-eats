@@ -530,9 +530,9 @@ const SignUp = () => {
                       : "border-gray-200 bg-white focus:ring-green-500"
                   }`}
                 >
-                  {countryCodes.map((country) => (
+                  {countryCodes.map((country, index) => (
                     <option
-                      key={country.code + country.country}
+                      key={index}
                       value={country.code}
                     >
                       {country.flag} {country.code} {country.country}

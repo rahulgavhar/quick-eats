@@ -14,7 +14,7 @@ const useGetItems = (restaurantId) => {
     hasPreviousPage: false,
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchItems = useCallback(
     async (page = 1) => {

@@ -12,11 +12,16 @@ import RestaurantCard from "./User/RestaurantCard";
 import FoodCard from "./General/FoodCard";
 import CartItem from "./User/CartItem";
 import OrderSummary from "./User/OrderSummary";
+import ShowOnMap from "./User/ShowOnMap";
 import Footer from "./General/Footer";
 import useGetCity from "../hooks/useGetCity";
 import useNearbyRestaurants from "../hooks/useNearbyRestaurants";
 import useGetItems from "../hooks/useGetItems";
+import useSearchItems from "../hooks/useSearchItems";
 import { toast } from "react-toastify";
+import SearchedItems from "./User/SearchedItems";
+import SampleItems from "./User/SampleItems";
+import BeatLoader from "react-spinners/BeatLoader";
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
@@ -25,20 +30,35 @@ const UserDashboard = () => {
   const { userData, city } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
 
-
   // Local state
   const cartItems = useSelector((state) => state.user.cartItems);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [showCart, setShowCart] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const dropdownRef = useRef(null);
 
-  
-  const { data: restaurants, loading, error, pagination: restaurantPagination, nextPage: nextRestaurantPage, previousPage: previousRestaurantPage, goToPage: goToRestaurantPage } = useNearbyRestaurants();
-  const { items: restaurantItems, loading: itemsLoading, pagination, nextPage, previousPage, goToPage } = useGetItems(selectedRestaurant?.id);
+  const {
+    data: restaurants,
+    loading,
+    error,
+    pagination: restaurantPagination,
+    nextPage: nextRestaurantPage,
+    previousPage: previousRestaurantPage,
+    goToPage: goToRestaurantPage,
+    allRestaurants,
+  } = useNearbyRestaurants();
+  const {
+    items: restaurantItems,
+    loading: itemsLoading,
+    pagination,
+    nextPage,
+    previousPage,
+    goToPage,
+  } = useGetItems(selectedRestaurant?.id);
 
   // Derived user details from store with safe fallbacks
   const firstName = (
@@ -107,7 +127,11 @@ const UserDashboard = () => {
 
   const updateQuantity = (foodId, restaurantId, quantity) => {
     dispatch(
-      userSliceActions.updateCartQuantity({ id: foodId, restaurantId, quantity })
+      userSliceActions.updateCartQuantity({
+        id: foodId,
+        restaurantId,
+        quantity,
+      })
     );
   };
 
@@ -116,12 +140,6 @@ const UserDashboard = () => {
       .reduce((total, item) => total + item.price * item.quantity, 0)
       .toFixed(2);
   };
-
-  const filteredRestaurants = restaurants.filter(
-    (restaurant) =>
-      restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restaurant.cuisine.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
@@ -182,12 +200,73 @@ const UserDashboard = () => {
           <>
             {/* Search Bar */}
             <SearchBar
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
+              setSearchName={setSearchName}
+              setSearchCategory={setSearchCategory}
               foodSuggestions={foodSuggestions}
               currentSuggestionIndex={currentSuggestionIndex}
               locationName={locationName}
+              setSelectedRestaurant={setSelectedRestaurant}
             />
+
+            {!selectedRestaurant && (
+              <>
+                {!(
+                  searchName ||
+                  (searchCategory && searchCategory != "All")
+                ) ? (
+                  <>
+                    {/* Initial Recomendations */}
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2
+                          className={`text-xl font-bold transition-colors duration-300 ${
+                            mode === "dark" ? "text-white" : "text-gray-800"
+                          }`}
+                        >
+                          {" "}
+                          Best Matches for You{" "}
+                          </h2>
+                          {loading && <BeatLoader />}
+                      </div>
+
+                      {/* Sample Items*/}
+                      {!loading && (
+                        <SampleItems
+                          allRestaurants={allRestaurants}
+                          addToCart={addToCart}
+                        />
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2
+                        className={`text-xl font-bold transition-colors duration-300 ${
+                          mode === "dark" ? "text-white" : "text-gray-800"
+                        }`}
+                      >
+                        {" "}
+                        Search Results{" "}
+                      </h2>
+                    </div>
+
+                    {/* Searched Items from useSearchItems*/}
+                    <SearchedItems
+                      useSearchItems={useSearchItems}
+                      searchName={searchName}
+                      searchCategory={searchCategory}
+                      allRestaurants={allRestaurants}
+                      addToCart={addToCart}
+                      onClearSearch={() => {
+                        setSearchName("");
+                        setSearchCategory("All");
+                      }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
 
             {selectedRestaurant ? (
               <>
@@ -209,16 +288,29 @@ const UserDashboard = () => {
                         mode === "dark" ? "text-white" : "text-gray-800"
                       }`}
                     >
-                      {selectedRestaurant.image && (selectedRestaurant.image.startsWith('http') || selectedRestaurant.image.startsWith('/')) ? (
+                      {selectedRestaurant.image &&
+                      (selectedRestaurant.image.startsWith("http") ||
+                        selectedRestaurant.image.startsWith("/")) ? (
                         <img
                           src={selectedRestaurant.image}
                           className="w-12 h-12 rounded object-cover"
                         />
                       ) : (
-                        <span className="text-3xl">{selectedRestaurant.image}</span>
+                        <span className="text-3xl">
+                          {selectedRestaurant.image}
+                        </span>
                       )}
                       {selectedRestaurant.name}
                     </h2>
+                    {/* Address */}
+                    <p
+                      className={`mt-2 transition-colors duration-300 ${
+                        mode === "dark" ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
+                      {" "}
+                      {selectedRestaurant.address}
+                    </p>
                     <div
                       className={`flex max-[430px]:flex-col max-[430px]:gap-2 gap-6 mt-3 transition-colors duration-300 ${
                         mode === "dark" ? "text-gray-400" : "text-gray-600"
@@ -276,12 +368,17 @@ const UserDashboard = () => {
                           key={food._id || food.id}
                           food={{
                             id: food._id || food.id,
-                            ...food
+                            ...food,
                           }}
-                          onAddToCart={() => addToCart({
-                            id: food._id || food.id,
-                            ...food
-                          }, selectedRestaurant)}
+                          onAddToCart={() =>
+                            addToCart(
+                              {
+                                id: food._id || food.id,
+                                ...food,
+                              },
+                              selectedRestaurant
+                            )
+                          }
                         />
                       ))}
                     </>
@@ -359,13 +456,20 @@ const UserDashboard = () => {
             ) : (
               <>
                 {/* Restaurants Grid */}
-                <h2
-                  className={`text-xl font-bold mb-6 transition-colors duration-300 ${
-                    mode === "dark" ? "text-white" : "text-gray-800"
-                  }`}
-                >
-                  Popular Restaurants Around You
-                </h2>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                  <h2
+                    className={`text-xl font-bold transition-colors duration-300 ${
+                      mode === "dark" ? "text-white" : "text-gray-800"
+                    }`}
+                  >
+                    Popular Restaurants Around You
+                  </h2>
+                  {restaurants && restaurants.length > 0 && (
+                    <div className="flex justify-end">
+                      <ShowOnMap restaurants={allRestaurants} />
+                    </div>
+                  )}
+                </div>
                 {loading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {[...Array(4)].map((_, idx) => (
@@ -405,7 +509,7 @@ const UserDashboard = () => {
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {filteredRestaurants.map((restaurant) => (
+                      {restaurants.map((restaurant) => (
                         <RestaurantCard
                           key={restaurant.id}
                           restaurant={restaurant}
@@ -434,24 +538,26 @@ const UserDashboard = () => {
                             mode === "dark" ? "text-white" : "text-gray-800"
                           }`}
                         >
-                          {[...Array(restaurantPagination.totalPages)].map((_, idx) => {
-                            const pageNum = idx + 1;
-                            return (
-                              <button
-                                key={pageNum}
-                                onClick={() => goToRestaurantPage(pageNum)}
-                                className={`px-3 py-1 rounded transition ${
-                                  restaurantPagination.currentPage === pageNum
-                                    ? "bg-green-500 text-white font-bold"
-                                    : mode === "dark"
-                                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                              >
-                                {pageNum}
-                              </button>
-                            );
-                          })}
+                          {[...Array(restaurantPagination.totalPages)].map(
+                            (_, idx) => {
+                              const pageNum = idx + 1;
+                              return (
+                                <button
+                                  key={pageNum}
+                                  onClick={() => goToRestaurantPage(pageNum)}
+                                  className={`px-3 py-1 rounded transition ${
+                                    restaurantPagination.currentPage === pageNum
+                                      ? "bg-green-500 text-white font-bold"
+                                      : mode === "dark"
+                                      ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                  }`}
+                                >
+                                  {pageNum}
+                                </button>
+                              );
+                            }
+                          )}
                         </div>
 
                         <button

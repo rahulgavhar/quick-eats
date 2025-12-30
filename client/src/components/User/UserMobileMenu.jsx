@@ -1,4 +1,3 @@
-import React from "react";
 import { ImSpoonKnife } from "react-icons/im";
 import {
   MdLightMode,
@@ -10,6 +9,7 @@ import {
 } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../../redux/slices/themeSlice";
+import { useNavigate } from "react-router-dom";
 
 const MobileMenu = ({
   showMobileMenu,
@@ -20,6 +20,7 @@ const MobileMenu = ({
 }) => {
   const dispatch = useDispatch();
   const { mode } = useSelector((state) => state.theme);
+  const navigate = useNavigate();
 
   if (!showMobileMenu) return null;
 
@@ -83,7 +84,10 @@ const MobileMenu = ({
                 ? "hover:bg-green-600 bg-gray-800 text-white"
                 : "hover:bg-green-100"
             }`}
-            onClick={() => setShowMobileMenu(false)}
+            onClick={() => {
+              setShowMobileMenu(false);
+              navigate("/profile");
+            }}
           >
             <MdPerson size={20} /> My Profile
           </button>

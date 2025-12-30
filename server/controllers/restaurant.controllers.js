@@ -262,10 +262,13 @@ Disadvantages:
 export const listRestaurantsNearLocation1 = async (req, res) => {
   const EARTH_RADIUS_M = 6378137; // WGS84 is correct
 
-  const { lon, lat, radius = 5000 } = req.query;
+  const { lon, lat, radius = 5000, page = 1, limit = 8 } = req.query;
   const longitude = Number(lon);
   const latitude = Number(lat);
   const radiusMeters = Math.min(Number(radius), 5000);
+
+  const pageNum = Math.max(parseInt(page) || 1, 1);
+  const pageLimit = Math.min(Math.max(parseInt(limit) || 8, 1), 50);
 
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
     return res.status(400).json({ error: "Invalid longitude" });
@@ -284,9 +287,29 @@ export const listRestaurantsNearLocation1 = async (req, res) => {
   try {
     const cached = await redisClientRestaurant.get(cacheKey);
     if (cached !== null) {
+      const allRestaurants = JSON.parse(cached);
+
+      const totalRestaurants = allRestaurants.length;
+      const totalPages = Math.ceil(totalRestaurants / pageLimit);
+      const skip = (pageNum - 1) * pageLimit;
+
+      const paginatedRestaurants = allRestaurants.slice(
+        skip,
+        skip + pageLimit
+      );
+
       return res.json({
-        restaurants: JSON.parse(cached),
+        allRestaurants,
+        restaurants: paginatedRestaurants,
         cached: true,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalRestaurants,
+          restaurantsPerPage: pageLimit,
+          hasNextPage: pageNum < totalPages,
+          hasPreviousPage: pageNum > 1,
+        },
       });
     }
   } catch (err) {
@@ -304,7 +327,7 @@ export const listRestaurantsNearLocation1 = async (req, res) => {
         },
       },
     })
-      .select("_id")
+      .select({ _id: 1, location: 1, name: 1 })
       .lean();
 
     const now = new Date();
@@ -327,9 +350,27 @@ export const listRestaurantsNearLocation1 = async (req, res) => {
       console.error("Cache write error:", err.message);
     }
 
+    const totalRestaurants = restaurants.length;
+    const totalPages = Math.ceil(totalRestaurants / pageLimit);
+    const skip = (pageNum - 1) * pageLimit;
+
+    const paginatedRestaurants = restaurants.slice(
+      skip,
+      skip + pageLimit
+    );
+
     return res.json({
-      restaurants,
+      allRestaurants: restaurants,
+      restaurants: paginatedRestaurants,
       cached: false,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalRestaurants,
+        restaurantsPerPage: pageLimit,
+        hasNextPage: pageNum < totalPages,
+        hasPreviousPage: pageNum > 1,
+      },
     });
   } catch (err) {
     console.error("Database query error:", err);
@@ -433,10 +474,11 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
 
     // Controlled concurrency fetcher for buckets
     async function fetchBucket(bLat, bLon) {
-      const bucketKey = `bucket:${BUCKET_SIZE_DEG}:${bLat.toFixed(
-        3
-      )}:${bLon.toFixed(3)}`;
-      const freqKey = `freq:${bLat.toFixed(3)}:${bLon.toFixed(3)}`;
+      const lat = bLat.toFixed(3);
+      const lon = bLon.toFixed(3);
+
+      const bucketKey = `bucket:${BUCKET_SIZE_DEG}:${lat}:${lon}`;
+      const freqKey = `freq:${lat}:${lon}`;
 
       try {
         const raw = await redisClientRestaurant.get(bucketKey);
@@ -444,14 +486,11 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
           try {
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) return parsed;
-            // fallback to refetch if cache corrupted
-          } catch (e) {
-            // corrupted cache, fall through to DB fetch
+          } catch {
             console.warn("Corrupted bucket cache, refetching:", bucketKey);
           }
         }
 
-        // Query DB: only fetch minimal fields needed
         const docs = await Restaurant.find({
           isOpen: true,
           location: {
@@ -463,25 +502,23 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
             },
           },
         })
-          .select({ _id: 1, location: 1 })
+          .select({ _id: 1, location: 1, name: 1 })
           .lean();
 
-        setImmediate(async () => {
+        // Fire-and-forget cache update
+        (async () => {
           try {
-            // Increment frequency
-            await redisClientRestaurant
+            const hits = await redisClientRestaurant
               .multi()
               .incr(freqKey)
               .expire(freqKey, 300)
-              .exec();
+              .exec()
+              .then((res) => Number(res?.[0]?.[1]) || 0);
 
-            // Compute adaptive TTL
             let ttl = baseTTL;
-            const hits = Number(await redisClientRestaurant.get(freqKey)) || 0;
             if (hits > 20) ttl = Math.max(ttl, 240);
             if (hits > 50) ttl = Math.max(ttl, 360);
 
-            // Cache docs
             await redisClientRestaurant.setEx(
               bucketKey,
               ttl,
@@ -490,7 +527,7 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
           } catch (e) {
             console.warn("Async cache update failed:", bucketKey, e);
           }
-        });
+        })();
 
         return docs || [];
       } catch (err) {
@@ -537,6 +574,7 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
     const paginatedRestaurants = final.slice(skip, skip + pageLimit);
 
     return res.json({
+      allRestaurants: final,
       restaurants: paginatedRestaurants,
       pagination: {
         currentPage: pageNum,

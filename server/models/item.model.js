@@ -54,6 +54,19 @@ const itemSchema = new mongoose.Schema(
   }
 );
 
+// Text search on item name
+itemSchema.index({ name: "text" });
+
+// Filter by restaurant
+itemSchema.index({ restaurantId: 1 });
+
+// Filter by category
+itemSchema.index({ category: 1 });
+
+// Most common real query: restaurant + category
+itemSchema.index({ restaurantId: 1, category: 1 });
+
+
 const Item = mongoose.model("Item", itemSchema);
 
 export default Item;
