@@ -22,7 +22,7 @@ import themeReducer from "./slices/themeSlice";
 const userPersistConfig = {
   key: "user",
   storage,
-  whitelist: ["userData", "city", "state", "cartItems", "coords", "fetchedAt", "restaurants"],
+  whitelist: ["userData", "city", "state", "cartItems", "coords", "fetchedAt", "restaurants", "developer_coords"],
 };
 const persistedUserReducer = persistReducer(
   userPersistConfig,

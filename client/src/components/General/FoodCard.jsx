@@ -5,12 +5,12 @@ const FoodCard = ({ food, onAddToCart }) => {
 
   return (
     <div
-      className={`rounded-lg shadow-md hover:shadow-xl transition overflow-hidden ${
+      className={`rounded-lg shadow-md hover:shadow-xl transition overflow-hidden h-87.5 flex flex-col ${
         mode === "dark" ? "bg-gray-800" : "bg-white"
       }`}
     >
       <div
-        className={`p-0 flex items-center justify-center h-40 w-full transition-colors duration-300 overflow-hidden ${
+        className={`p-0 flex items-center justify-center h-48 w-full shrink-0 transition-colors duration-300 overflow-hidden ${
           mode === "dark"
             ? "bg-linear-to-b from-gray-700 to-gray-600"
             : "bg-linear-to-b from-green-100 to-cyan-100"
@@ -25,16 +25,16 @@ const FoodCard = ({ food, onAddToCart }) => {
           <span className="text-5xl">{food?.image}</span>
         )}
       </div>
-      <div className="p-4">
+      <div className="p-4 flex-1 flex flex-col">
         <h3
-          className={`text-xl font-bold transition-colors duration-300 ${
+          className={`text-xl font-bold transition-colors duration-300 line-clamp-2 ${
             mode === "dark" ? "text-white" : "text-gray-800"
           }`}
         >
           {food.name}
         </h3>
         <p
-          className={`text-sm mt-2 transition-colors duration-300 ${
+          className={`text-sm mt-2 transition-colors duration-300 line-clamp-2 flex-1 ${
             mode === "dark" ? "text-gray-400" : "text-gray-600"
           }`}
         >

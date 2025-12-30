@@ -231,7 +231,7 @@ export const getItemsBySearch = async (req, res) => {
 
 export const getSamplesForRestaurant = async (req, res) => {
   try {
-    const { restaurants: restaurantIds } = req.body;
+    const { restaurants: restaurantIds, fetchedItems, size=6 } = req.body;
 
     if (!Array.isArray(restaurantIds) || restaurantIds.length === 0) {
       return res.status(400).json({
@@ -242,6 +242,12 @@ export const getSamplesForRestaurant = async (req, res) => {
     const restaurantObjectIds = restaurantIds
       .filter((id) => mongoose.Types.ObjectId.isValid(id))
       .map((id) => new mongoose.Types.ObjectId(id));
+
+    const fetchedOnjectItemTds = Array.isArray(fetchedItems)
+      ? fetchedItems
+          .filter((id) => mongoose.Types.ObjectId.isValid(id))
+          .map((id) => new mongoose.Types.ObjectId(id))
+      : [];
 
     if (restaurantObjectIds.length === 0) {
       return res.status(400).json({
@@ -256,7 +262,12 @@ export const getSamplesForRestaurant = async (req, res) => {
         },
       },
       {
-        $sample: { size: 6 },
+        $match: {
+          _id: { $nin: fetchedOnjectItemTds },
+        },
+      },
+      {
+        $sample: { size },
       },
     ]);
 

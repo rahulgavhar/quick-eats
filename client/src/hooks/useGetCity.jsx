@@ -5,9 +5,21 @@ import { userSliceActions } from "../redux/slices/userSlice.js";
 
 const useGetCity = () => {
   const dispatch = useDispatch();
-  const { coords } = useSelector((state) => state.user);
+  const { coords, developer_coords } = useSelector((state) => state.user);
 
   useEffect(() => {
+    if (developer_coords) {
+      dispatch(userSliceActions.setCity("Panvel"));
+      dispatch(userSliceActions.setState("Maharashtra"));
+      dispatch(
+        userSliceActions.setCoords({
+          lat: 19.042729,
+          lon: 73.075492,
+        })
+      );
+      return;
+    }
+
     if (!navigator.geolocation) {
       console.error("Geolocation not supported");
       return;
@@ -30,10 +42,12 @@ const useGetCity = () => {
         ) {
           return;
         }
-        
-        if(coords.lat === null || coords.lon === null) {
+
+        if (coords.lat === null || coords.lon === null) {
           // Initial fetch, set coords in store
-          dispatch(userSliceActions.setCoords({ lat: latitude, lon: longitude }));
+          dispatch(
+            userSliceActions.setCoords({ lat: latitude, lon: longitude })
+          );
         }
 
         try {

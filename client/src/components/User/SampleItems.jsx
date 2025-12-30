@@ -1,34 +1,91 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
+import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import FoodCard from "../General/FoodCard";
 import axios from "axios";
 
 const SampleItems = ({ allRestaurants, addToCart }) => {
   const { mode } = useSelector((state) => state.theme);
   const [sampleItems, setSampleItems] = useState([]);
+  const [fetchedItems, setFetchedItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const scrollContainerRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 280; // w-64 (256px) + gap (16px) + padding
+      scrollContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+      setTimeout(checkScroll, 300);
+    }
+  };
+
+  const handleRightArrowClick = () => {
+    scroll("right");
+    fetchOnScroll();
+  };
+
+  const fetchOnScroll = async () => {
+    try {
+      const apiURL = import.meta.env.VITE_API_URL;
+
+      // Converting to have only ids
+      const restaurantIds = allRestaurants.map((r) => r._id);
+
+      const response = await axios.post(
+        `${apiURL}/api/items/samples`,
+        { restaurants: restaurantIds, fetchedItems, size: 2 },
+        {
+          withCredentials: true,
+        }
+      );
+      setSampleItems((prev) => [...prev, ...(response.data || [])]);
+      setFetchedItems((prev) => [
+        ...prev,
+        ...response.data.map((item) => item._id || item.id),
+      ]);
+    } catch (error) {
+      console.error("Error fetching sample items:", error);
+      setError(error.response?.data?.message || "Failed to load best picks");
+    }
+  };
 
   const fetchSampleItems = async () => {
     try {
       setLoading(true);
       setError(null);
       const apiURL = import.meta.env.VITE_API_URL;
-      
+
       // Converting to have only ids
       const restaurantIds = allRestaurants.map((r) => r._id);
-      
+
       const response = await axios.post(
         `${apiURL}/api/items/samples`,
-        { restaurants: restaurantIds },
+        { restaurants: restaurantIds, fetchedItems, size: 6 },
         {
           withCredentials: true,
         }
       );
-      
+
       setSampleItems(response.data || []);
-
-
+      setFetchedItems((prev) => [
+        ...prev,
+        ...response.data.map((item) => item._id || item.id),
+      ]);
     } catch (error) {
       console.error("Error fetching sample items:", error);
       setError(error.response?.data?.message || "Failed to load best picks");
@@ -42,6 +99,12 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
       fetchSampleItems();
     }
   }, [allRestaurants]);
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, [sampleItems]);
 
   return (
     <div className="mb-8">
@@ -74,11 +137,11 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
 
       {/* Loading State */}
       {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-transparent">
           {[...Array(8)].map((_, idx) => (
             <div
               key={idx}
-              className={`rounded-lg shadow-md overflow-hidden border-t-4 border-orange-500 animate-pulse ${
+              className={`shrink-0 w-64 rounded-lg shadow-md overflow-hidden border-t-4 border-orange-500 animate-pulse ${
                 mode === "dark" ? "bg-gray-800" : "bg-white"
               }`}
             >
@@ -123,7 +186,9 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
           <div className="flex items-start gap-3">
             <span className="text-2xl">⚠️</span>
             <div>
-              <h3 className="font-bold text-lg mb-1">Error Loading Best Picks</h3>
+              <h3 className="font-bold text-lg mb-1">
+                Error Loading Best Picks
+              </h3>
               <p className="text-sm">{error}</p>
             </div>
           </div>
@@ -155,38 +220,73 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
         </div>
       )}
 
-      {/* Items Grid */}
+      {/* Items Horizontal Scroll */}
       {!loading && !error && sampleItems && sampleItems.length > 0 && (
         <>
           <div
-            className={`mb-4 text-sm font-semibold ${
+            className={`mb-4 text-sm font-semibold flex justify-end ${
               mode === "dark" ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            {sampleItems.length} featured item{sampleItems.length !== 1 ? "s" : ""}
+            <span className="font-bold">
+              {sampleItems.length} featured item
+              {sampleItems.length !== 1 ? "s" : ""}
+            </span>{" "}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {sampleItems.map((item) => (
-              <FoodCard
-                key={item._id || item.id}
-                food={{
-                  id: item._id || item.id,
-                  ...item,
-                }}
-                onAddToCart={() =>
-                  addToCart(
-                    {
+          <div className="relative group">
+            {/* Left Arrow Button */}
+            <button
+              onClick={() => scroll("left")}
+              disabled={!canScrollLeft}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-2 rounded-full shadow-lg transition-all ${
+                !canScrollLeft ? "opacity-50 hidden" : "opacity-100"
+              }`}
+              aria-label="Scroll left"
+            >
+              <MdChevronLeft size={24} />
+            </button>
+
+            {/* Carousel Container */}
+            <div
+              ref={scrollContainerRef}
+              className="flex gap-4 overflow-x-hidden pb-4"
+              onScroll={checkScroll}
+            >
+              {sampleItems.map((item) => (
+                <div key={item._id || item.id} className="shrink-0 w-64">
+                  <FoodCard
+                    food={{
                       id: item._id || item.id,
                       ...item,
-                    },
-                    {
-                      id: item.restaurantId,
-                      name: item.restaurantName || "Unknown Restaurant",
+                    }}
+                    onAddToCart={() =>
+                      addToCart(
+                        {
+                          id: item._id || item.id,
+                          ...item,
+                        },
+                        {
+                          id: item.restaurantId,
+                          name: item.restaurantName || "Unknown Restaurant",
+                        }
+                      )
                     }
-                  )
-                }
-              />
-            ))}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Right Arrow Button */}
+            <button
+              onClick={handleRightArrowClick}
+              disabled={!canScrollRight}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-2 rounded-full shadow-lg transition-all ${
+                !canScrollRight ? "opacity-50 hidden" : "opacity-100"
+              }`}
+              aria-label="Scroll right"
+            >
+              <MdChevronRight size={24} />
+            </button>
           </div>
         </>
       )}

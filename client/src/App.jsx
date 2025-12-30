@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import SignUp from "./pages/SignUp.jsx";
 import SignIn from "./pages/SignIn.jsx";
@@ -17,6 +17,8 @@ const App = () => {
   const dispatch = useDispatch();
   const { mode } = useSelector((state) => state.theme);
   const { userData, loading, error } = useSelector((state) => state.user);
+  const [activePopup, setActivePopup] = useState(false);
+  const [popupShown, setPopupShown] = useState(false);
 
   useEffect(() => {
     dispatch(fetchUserData());
@@ -54,24 +56,26 @@ const App = () => {
         path="/reset-password"
         element={!userData ? <ResetPassword /> : <Navigate to="/" />}
       />
-      <Route
-        path="/profile"
-        element={<Profile />}
-      />
+      <Route path="/profile" element={<Profile />} />
       <Route
         path="/"
-        element={!userData ? <Guest /> : <Home />}
+        element={
+          !userData ? (
+            <Guest />
+          ) : (
+            <Home
+              activePopup={activePopup}
+              popupShown={popupShown}
+              setActivePopup={setActivePopup}
+              setPopupShown={setPopupShown}
+            />
+          )
+        }
       />
       {/* 404 */}
-      <Route
-        path="/404"
-        element={<PageNotFound />}
-      />
+      <Route path="/404" element={<PageNotFound />} />
       {/* Catch-all route for undefined paths */}
-      <Route
-        path="*"
-        element={<PageNotFound />}
-      />
+      <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };

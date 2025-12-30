@@ -14,6 +14,7 @@ const initialState = {
   restaurants: [],
   loading: false,
   error: null,
+  developer_coords: true
 };
 
 /* ============================
@@ -30,9 +31,7 @@ export const fetchUserData = createAsyncThunk(
       });
       return res.data;
     } catch (err) {
-      return rejectWithValue(
-        err.response?.data || "Failed to fetch user data"
-      );
+      return rejectWithValue(err.response?.data || "Failed to fetch user data");
     }
   }
 );
@@ -98,9 +97,13 @@ const userSlice = createSlice({
         (i) => i.id === id && i.restaurantId === restaurantId
       );
       if (idx >= 0) {
-        state.cartItems[idx].quantity = (state.cartItems[idx].quantity || 1) + 1;
+        state.cartItems[idx].quantity =
+          (state.cartItems[idx].quantity || 1) + 1;
       } else {
-        const quantity = action.payload.quantity && action.payload.quantity > 0 ? action.payload.quantity : 1;
+        const quantity =
+          action.payload.quantity && action.payload.quantity > 0
+            ? action.payload.quantity
+            : 1;
         state.cartItems.push({ ...action.payload, quantity });
       }
     },
@@ -134,6 +137,9 @@ const userSlice = createSlice({
     setRestaurants: (state, action) => {
       state.restaurants = action.payload;
     },
+    toDev: (state, action) => {
+      state.developer_coords = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder

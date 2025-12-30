@@ -1,10 +1,11 @@
 import React from "react";
 import { ImSpoonKnife } from "react-icons/im";
-import { MdLightMode, MdDarkMode, MdAccountCircle } from "react-icons/md";
+import { MdLightMode, MdDarkMode, MdAccountCircle, MdLocationOn } from "react-icons/md";
 import { RiMenu3Line } from "react-icons/ri";
 import { GiCrossedBones } from "react-icons/gi";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../../redux/slices/themeSlice";
+import Popup from "reactjs-popup";
 
 const Header = ({
   firstName,
@@ -18,6 +19,9 @@ const Header = ({
   setShowMobileMenu,
   dropdownRef,
   ProfileDropdown,
+  setToDeveloperLocation,
+  setToCurrentLocation,
+  city,
 }) => {
   const dispatch = useDispatch();
   const { mode } = useSelector((state) => state.theme);
@@ -31,9 +35,9 @@ const Header = ({
           : "bg-linear-to-r from-green-500 to-teal-500 text-white"
       }`}
     >
-      <div className="max-w-7xl mx-auto flex justify-between items-center p-2">
-        <div>
-          <h1 className="text-3xl font-bold max-[270px]:hidden">
+      <div className="max-w-7xl mx-auto grid grid-cols-3 max-md:grid-cols-2 items-center p-2 gap-4">
+        <div className="justify-self-start">
+          <h1 className="text-3xl font-bold max-[310px]:hidden max-[430px]:text-xl">
             🍽️ Quick Eats
           </h1>
           <div className="flex items-center gap-3">
@@ -54,8 +58,50 @@ const Header = ({
             )}
           </div>
         </div>
+        {/* Change Location */}
+        <div className="justify-self-center max-md:hidden">
+          <Popup
+            trigger={
+              <button
+                className="px-4 py-2 rounded-full font-semibold bg-white/90 text-teal-700 hover:bg-white transition shadow-md flex items-center gap-2"
+                type="button"
+              >
+                <MdLocationOn size={18} />
+                Change Location
+              </button>
+            }
+            position="bottom center"
+            closeOnDocumentClick
+            arrow={false}
+          >
+            {(close) => (
+              <div
+                className={`p-4 rounded-lg shadow-lg w-72 ${
+                  mode === "dark" ? "bg-gray-800 text-white" : "bg-white text-gray-800"
+                }`}
+              >
+                <p className="font-semibold mb-3 text-center">Select your location</p>
+                <div className="space-y-2">
+                  <button
+                    className="w-full px-3 py-2 rounded-md bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
+                    onClick={() => setToDeveloperLocation(close)}
+                  >
+                    Developer's location (Panvel)
+                  </button>
+                  <button
+                    className="w-full px-3 py-2 rounded-md bg-teal-600 text-white font-semibold hover:bg-teal-700 transition"
+                    onClick={() => setToCurrentLocation(close)}
+                  >
+                    Use current
+                  </button>
+                </div>
+              </div>
+            )}
+          </Popup>
+        </div>
+
         {/* Desktop actions */}
-        <div className="md:flex items-center gap-4">
+        <div className="md:flex items-center gap-4 justify-self-end">
           {/* Theme Toggle */}
           <button
             onClick={() => dispatch(toggleTheme())}

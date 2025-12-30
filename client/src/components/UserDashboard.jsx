@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser, userSliceActions } from "../redux/slices/userSlice";
 import { persistor } from "../redux/store";
@@ -22,8 +22,14 @@ import { toast } from "react-toastify";
 import SearchedItems from "./User/SearchedItems";
 import SampleItems from "./User/SampleItems";
 import BeatLoader from "react-spinners/BeatLoader";
+import Popup from "reactjs-popup";
 
-const UserDashboard = () => {
+const UserDashboard = ({
+  activePopup,
+  popupShown,
+  setActivePopup,
+  setPopupShown,
+}) => {
   const dispatch = useDispatch();
   useGetCity();
 
@@ -40,6 +46,7 @@ const UserDashboard = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const dropdownRef = useRef(null);
+  const developer_coords = useSelector((state) => state.user.developer_coords);
 
   const {
     data: restaurants,
@@ -91,6 +98,21 @@ const UserDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Show popup once when developer location is active
+  useEffect(() => {
+    if (developer_coords && !popupShown) {
+      setActivePopup(true);
+      setPopupShown(true);
+    }
+  }, [developer_coords, popupShown]);
+
+  // Reset popup flag when switching away from developer location
+  useEffect(() => {
+    if (!developer_coords) {
+      setPopupShown(false);
+    }
+  }, [developer_coords]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -109,6 +131,32 @@ const UserDashboard = () => {
     setShowProfileDropdown(false);
     toast.success("Logged out successfully!");
   };
+
+  const setToDeveloperLocation = useCallback(
+    (close) => {
+      dispatch(userSliceActions.setCity("Panvel"));
+      dispatch(userSliceActions.setState("Maharashtra"));
+      dispatch(
+        userSliceActions.setCoords({
+          lat: 19.042729,
+          lon: 73.075492,
+        })
+      );
+      dispatch(userSliceActions.toDev(true));
+      if (!developer_coords) window.location.reload();
+      if (close) close();
+    },
+    [dispatch]
+  );
+
+  const setToCurrentLocation = useCallback(
+    (close) => {
+      dispatch(userSliceActions.toDev(false));
+      if (developer_coords) window.location.reload();
+      if (close) close();
+    },
+    [dispatch]
+  );
 
   const addToCart = (food, restaurant) => {
     dispatch(
@@ -178,6 +226,9 @@ const UserDashboard = () => {
         showMobileMenu={showMobileMenu}
         setShowMobileMenu={setShowMobileMenu}
         dropdownRef={dropdownRef}
+        setToDeveloperLocation={setToDeveloperLocation}
+        setToCurrentLocation={setToCurrentLocation}
+        city={city}
         ProfileDropdown={() => (
           <ProfileDropdown
             handleLogout={handleLogout}
@@ -193,7 +244,50 @@ const UserDashboard = () => {
         cart={cartItems}
         setShowCart={setShowCart}
         handleLogout={handleLogout}
+        setToDeveloperLocation={setToDeveloperLocation}
+        setToCurrentLocation={setToCurrentLocation}
+        city={city}
       />
+
+      {/* Warning Popup to Change Location */}
+      <Popup
+        open={activePopup}
+        closeOnDocumentClick={false}
+        onClose={() => setActivePopup(false)}
+        modal
+        nested
+      >
+        {(close) => (
+          <div
+            className={`rounded-lg p-4 sm:p-6 w-96 max-w-[90vw] shadow-xl ${
+              mode === "dark"
+                ? "bg-gray-800 text-yellow-300"
+                : "bg-white text-yellow-800"
+            }`}
+          >
+            <div className="text-center">
+              <h2 className="text-lg sm:text-xl font-bold mb-3 flex items-center justify-center gap-2 flex-wrap">
+                <span className="text-2xl sm:text-3xl">⚠️</span>
+                <span>Developer Location Active</span>
+              </h2>
+              <p className="mb-4 text-sm sm:text-base">
+                Currently viewing the developer's location (Panvel). To see
+                restaurants near you, please change your location.
+              </p>
+              <button
+                onClick={close}
+                className={`px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors duration-200 text-sm sm:text-base ${
+                  mode === "dark"
+                    ? "bg-yellow-700 text-yellow-300 hover:bg-yellow-600"
+                    : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                }`}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
+      </Popup>
 
       <div className="max-w-7xl mx-auto p-6">
         {!showCart ? (
@@ -225,8 +319,8 @@ const UserDashboard = () => {
                         >
                           {" "}
                           Best Matches for You{" "}
-                          </h2>
-                          {loading && <BeatLoader />}
+                        </h2>
+                        {loading && <BeatLoader color="#22c55e" size={8} />}
                       </div>
 
                       {/* Sample Items*/}
