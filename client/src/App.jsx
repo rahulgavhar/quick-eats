@@ -12,6 +12,8 @@ import PageNotFound from "./pages/PageNotFound.jsx";
 import Loader from "./components/General/Loader";
 import Guest from "./pages/Guest.jsx";
 import ErrorComponent from "./components/General/ErrorComponent";
+import CheckOut from "./pages/CheckOut.jsx";
+import MyOrders from "./pages/MyOrders.jsx";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -72,6 +74,17 @@ const App = () => {
           )
         }
       />
+      {/* Checkout */}
+      <Route
+        path="/checkout"
+        element={!userData ? <Navigate to="/signin" /> : <CheckOut />}
+      />
+      <Route
+        path="/my-orders"
+        element={!userData ? <Navigate to="/signin" /> : <MyOrders />}
+      />
+
+      {/* Error Handling */}
       {/* 404 */}
       <Route path="/404" element={<PageNotFound />} />
       {/* Catch-all route for undefined paths */}

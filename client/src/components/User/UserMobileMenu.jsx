@@ -155,7 +155,10 @@ const MobileMenu = ({
                 ? "hover:bg-green-600 bg-gray-800 text-white"
                 : "hover:bg-green-100"
             }`}
-            onClick={() => setShowMobileMenu(false)}
+            onClick={() => {
+              setShowMobileMenu(false)
+              navigate("/my-orders");
+            }}
           >
             <MdReceipt size={20} /> My Orders
           </button>
@@ -165,7 +168,10 @@ const MobileMenu = ({
                 ? "hover:bg-green-600 bg-gray-800 text-white"
                 : "hover:bg-green-100"
             }`}
-            onClick={() => setShowMobileMenu(false)}
+            onClick={() => {
+              setShowMobileMenu(false)
+              navigate("/profile");
+            }}
           >
             <MdSettings size={20} /> Settings
           </button>

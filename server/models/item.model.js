@@ -66,6 +66,10 @@ itemSchema.index({ category: 1 });
 // Most common real query: restaurant + category
 itemSchema.index({ restaurantId: 1, category: 1 });
 
+// To quickly find an item by id within a restaurant
+itemSchema.index({ restaurantId: 1, _id: 1 });
+
+
 
 const Item = mongoose.model("Item", itemSchema);
 

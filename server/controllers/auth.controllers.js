@@ -36,7 +36,7 @@ export const signUp = async (req, res) => {
     });
     await newUser.save();
 
-    const token = genToken(newUser._id);
+    const token = genToken(newUser._id, newUser.role);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -74,7 +74,7 @@ export const signIn = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const token = genToken(user._id);
+    const token = genToken(user._id, user.role);
     res.cookie("token", token, {
       httpOnly: true,
       secure: ENV.NODE_ENV === "production",
@@ -408,7 +408,7 @@ export const googleAuth = async (req, res) => {
       });
     }
 
-    const token = genToken(user._id);
+    const token = genToken(user._id, user.role);
 
     res.cookie("token", token, {
       httpOnly: true,

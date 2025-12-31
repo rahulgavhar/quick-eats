@@ -52,6 +52,15 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    orders: [
+      {
+        orderId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Order",
+        },
+      },
+    ],
+
     /* =========================
        OTP AUTH / VERIFICATION
     ========================== */

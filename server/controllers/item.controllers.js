@@ -231,49 +231,40 @@ export const getItemsBySearch = async (req, res) => {
 
 export const getSamplesForRestaurant = async (req, res) => {
   try {
-    const { restaurants: restaurantIds, fetchedItems, size=6 } = req.body;
+    const { restaurants, lastFetched: lastItemId, size = 6 } = req.body;
 
-    if (!Array.isArray(restaurantIds) || restaurantIds.length === 0) {
-      return res.status(400).json({
-        message: "Restaurants array is required",
-      });
+    // 1. Validate restaurants array
+    if (!Array.isArray(restaurants) || restaurants.length === 0) {
+      return res.status(400).json({ message: "Restaurants array is required" });
     }
 
-    const restaurantObjectIds = restaurantIds
+    // 2. Convert restaurant IDs to ObjectId
+    const restaurantObjectIds = restaurants
       .filter((id) => mongoose.Types.ObjectId.isValid(id))
       .map((id) => new mongoose.Types.ObjectId(id));
 
-    const fetchedOnjectItemTds = Array.isArray(fetchedItems)
-      ? fetchedItems
-          .filter((id) => mongoose.Types.ObjectId.isValid(id))
-          .map((id) => new mongoose.Types.ObjectId(id))
-      : [];
-
     if (restaurantObjectIds.length === 0) {
-      return res.status(400).json({
-        message: "No valid restaurant IDs provided",
-      });
+      return res.status(400).json({ message: "No valid restaurant IDs provided" });
     }
 
-    const items = await Item.aggregate([
-      {
-        $match: {
-          restaurantId: { $in: restaurantObjectIds },
-        },
-      },
-      {
-        $match: {
-          _id: { $nin: fetchedOnjectItemTds },
-        },
-      },
-      {
-        $sample: { size },
-      },
-    ]);
+    // 3. Build query
+    const query = {
+      restaurantId: { $in: restaurantObjectIds },
+    };
+
+    // 4. Apply cursor if provided
+    if (lastItemId && mongoose.Types.ObjectId.isValid(lastItemId)) {
+      query._id = { $gt: new mongoose.Types.ObjectId(lastItemId) };
+    }
+
+    // 5. Fetch next batch
+    const items = await Item.find(query)
+      .sort({ _id: 1 })
+      .limit(size);
 
     return res.status(200).json(items);
   } catch (error) {
-    console.error("Error fetching random items:", error);
+    console.error("Error fetching items:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

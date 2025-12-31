@@ -2,7 +2,7 @@ import express from 'express';
 const itemRouter = express.Router();
 
 import { addItem, editItem, deleteItem, getItemsByRestaurant, getItemsByCategory, deleteAllItemsOfRestaurant, getItemsBySearch, getSamplesForRestaurant } from '../controllers/item.controllers.js';
-import { isAuth } from '../middlewares/isAuth.js';
+import { isAuth } from '../middlewares/auth.js';
 
 
 itemRouter.post('/create/:restaurantId', isAuth, addItem);

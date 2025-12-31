@@ -27,7 +27,9 @@ import authRouter from './routes/auth.routes.js';
 import userRouter from './routes/user.routes.js';
 import restaurantRouter from './routes/restaurant.routes.js';
 import itemRouter from './routes/item.routes.js';
+import orderRouter from './routes/order.routes.js';
 
+app.use('/api/orders', orderRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/restaurants', restaurantRouter);

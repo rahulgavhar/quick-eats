@@ -262,7 +262,7 @@ Disadvantages:
 export const listRestaurantsNearLocation1 = async (req, res) => {
   const EARTH_RADIUS_M = 6378137; // WGS84 is correct
 
-  const { lon, lat, radius = 5000, page = 1, limit = 8 } = req.query;
+  const { lon, lat, radius = 3000, page = 1, limit = 8 } = req.query;
   const longitude = Number(lon);
   const latitude = Number(lat);
   const radiusMeters = Math.min(Number(radius), 5000);
@@ -416,7 +416,7 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
 
   // Validate & parse input
   try {
-    const { lon, lat, radius = 5000, page = 1, limit = 8 } = req.query;
+    const { lon, lat, radius = 3000, page = 1, limit = 8 } = req.query;
     const longitude = parseFloat(lon);
     const latitude = parseFloat(lat);
     const radiusMeters = Math.min(Number(radius) || 0, 5000);

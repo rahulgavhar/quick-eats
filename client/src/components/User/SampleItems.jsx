@@ -7,7 +7,7 @@ import axios from "axios";
 const SampleItems = ({ allRestaurants, addToCart }) => {
   const { mode } = useSelector((state) => state.theme);
   const [sampleItems, setSampleItems] = useState([]);
-  const [fetchedItems, setFetchedItems] = useState([]);
+  const [lastFetched, setLastFetched] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const scrollContainerRef = useRef(null);
@@ -45,19 +45,16 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
 
       // Converting to have only ids
       const restaurantIds = allRestaurants.map((r) => r._id);
-
+      
       const response = await axios.post(
         `${apiURL}/api/items/samples`,
-        { restaurants: restaurantIds, fetchedItems, size: 2 },
+        { restaurants: restaurantIds, lastFetched, size: 2 },
         {
           withCredentials: true,
         }
       );
       setSampleItems((prev) => [...prev, ...(response.data || [])]);
-      setFetchedItems((prev) => [
-        ...prev,
-        ...response.data.map((item) => item._id || item.id),
-      ]);
+      if(response.data.length) setLastFetched((response.data[response.data.length - 1]._id || response.data[response.data.length - 1].id));
     } catch (error) {
       console.error("Error fetching sample items:", error);
       setError(error.response?.data?.message || "Failed to load best picks");
@@ -75,17 +72,14 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
 
       const response = await axios.post(
         `${apiURL}/api/items/samples`,
-        { restaurants: restaurantIds, fetchedItems, size: 6 },
+        { restaurants: restaurantIds, lastFetched, size: 6 },
         {
           withCredentials: true,
         }
       );
 
       setSampleItems(response.data || []);
-      setFetchedItems((prev) => [
-        ...prev,
-        ...response.data.map((item) => item._id || item.id),
-      ]);
+      setLastFetched(response.data[response.data.length - 1]._id || response.data[response.data.length - 1].id);
     } catch (error) {
       console.error("Error fetching sample items:", error);
       setError(error.response?.data?.message || "Failed to load best picks");

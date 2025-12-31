@@ -46,11 +46,19 @@ const restaurantProfileSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    
+
     items: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Item",
+      },
+    ],
+    orders: [
+      {
+        orderId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Order",
+        },
       },
     ],
   },

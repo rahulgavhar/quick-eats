@@ -33,7 +33,7 @@ const SearchBar = ({ setSearchCategory, setSearchName, foodSuggestions, currentS
     <div className="mb-8">
       <form onSubmit={handleSearch}>
         <div
-          className={`flex flex-col sm:flex-row gap-2 sm:gap-0 rounded-2xl sm:rounded-full shadow-md border-2 overflow-hidden transition-colors duration-300 ${
+          className={`flex flex-col sm:flex-row gap-0 rounded-2xl sm:rounded-full shadow-md border-2 overflow-hidden transition-colors duration-300 ${
             mode === "dark"
               ? "bg-gray-800 border-gray-600 focus-within:border-green-400"
               : "bg-white border-green-300 focus-within:border-green-500"

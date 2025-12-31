@@ -77,6 +77,7 @@ const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
           onClick={() => {
             setShowProfileDropdown(false);
             // Add orders navigation here
+            navigate("/my-orders");
           }}
           className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors duration-200 ${
             mode === "dark"
@@ -92,6 +93,7 @@ const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
           onClick={() => {
             setShowProfileDropdown(false);
             // Add settings navigation here
+            navigate("/profile");
           }}
           className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors duration-200 ${
             mode === "dark"

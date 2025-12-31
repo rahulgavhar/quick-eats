@@ -23,6 +23,7 @@ import SearchedItems from "./User/SearchedItems";
 import SampleItems from "./User/SampleItems";
 import BeatLoader from "react-spinners/BeatLoader";
 import Popup from "reactjs-popup";
+import { useNavigate } from "react-router-dom";
 
 const UserDashboard = ({
   activePopup,
@@ -31,6 +32,9 @@ const UserDashboard = ({
   setPopupShown,
 }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // Get city from custom hook
   useGetCity();
 
   const { userData, city } = useSelector((state) => state.user);
@@ -191,19 +195,10 @@ const UserDashboard = ({
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
-      alert("Your cart is empty!");
+      toast.error("Your cart is empty. Add some items before checkout.");
       return;
     }
-    const deliveryTo = userData?.address?.street
-      ? `${userData.address.street}${
-          userData.address.city ? ", " + userData.address.city : ""
-        }`
-      : userData?.address || locationName;
-    alert(
-      `Order placed! Total: $${calculateTotal()}\nDelivery to: ${deliveryTo}`
-    );
-    dispatch(userSliceActions.clearCart());
-    setShowCart(false);
+    navigate("/checkout");
   };
 
   return (

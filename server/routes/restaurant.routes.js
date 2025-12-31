@@ -2,7 +2,7 @@ import express from 'express';
 const restaurantRouter = express.Router();
 
 import { createRestaurant, editRestaurant, getRestaurantById, getOwnerRestaurant, deleteRestaurant, listRestaurantsInCity, listRestaurantsInState, listRestaurantsNearLocation1, getAddressFromCoordinates, listRestaurantsNearLocation2 } from '../controllers/restaurant.controllers.js';
-import { isAuth } from '../middlewares/isAuth.js';
+import { isAuth } from '../middlewares/auth.js';
 import { upload } from '../middlewares/multer.js';
 import { locationRateLimiter } from '../middlewares/rateLimiter.js';
 
