@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const CheckOut = () => {
+const Checkout = () => {
   const { mode } = useSelector((state) => state.theme);
   const { userData, cartItems, coords, city } = useSelector((state) => state.user);
   const navigate = useNavigate();
@@ -434,4 +434,4 @@ const CheckOut = () => {
   );
 };
 
-export default CheckOut;
+export default Checkout;

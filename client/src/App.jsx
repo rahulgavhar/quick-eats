@@ -12,7 +12,7 @@ import PageNotFound from "./pages/PageNotFound.jsx";
 import Loader from "./components/General/Loader";
 import Guest from "./pages/Guest.jsx";
 import ErrorComponent from "./components/General/ErrorComponent";
-import CheckOut from "./pages/CheckOut.jsx";
+import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders.jsx";
 
 const App = () => {
@@ -77,7 +77,7 @@ const App = () => {
       {/* Checkout */}
       <Route
         path="/checkout"
-        element={!userData ? <Navigate to="/signin" /> : <CheckOut />}
+        element={!userData ? <Navigate to="/signin" /> : <Checkout />}
       />
       <Route
         path="/my-orders"
