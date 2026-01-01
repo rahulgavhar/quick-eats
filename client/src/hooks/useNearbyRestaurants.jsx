@@ -21,8 +21,8 @@ const useNearbyRestaurants = () => {
   const [coordinates, setCoordinates] = useState(null);
   const hasInitialFetchRef = useRef(false);
   const originalCoordsRef = useRef(null); // Store original geolocation coords
-  const originalStateRef = useRef(city); // Store original restaurant state
-  const originalCityRef = useRef(state); // Store original city
+  const originalStateRef = useRef(state); // Store original restaurant state
+  const originalCityRef = useRef(city); // Store original city
 
   const fetchRestaurants = useCallback(
     async (page = 1) => {
@@ -151,8 +151,8 @@ const useNearbyRestaurants = () => {
           setCoordinates(coords);
           originalCoordsRef.current = coords; // Store original coords
           // Initialize refs on first geolocation success
-          if (!originalStateRef.current) originalStateRef.current = "";
-          if(!originalCityRef.current) originalCityRef.current = "";
+          if (state) originalStateRef.current = state;
+          if(city) originalCityRef.current = city;
         }
       },
       (error) => {

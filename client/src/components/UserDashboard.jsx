@@ -275,8 +275,8 @@ const UserDashboard = ({
                 <span>Developer Location Active</span>
               </h2>
               <p className="mb-4 text-sm sm:text-base">
-                Currently viewing the developer's location (Panvel). To see
-                restaurants near you, please change your location.
+                Currently viewing the developer's location.
+                Restaurants may not be available in Your Area.
               </p>
               <button
                 onClick={close}

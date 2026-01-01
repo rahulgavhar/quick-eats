@@ -13,6 +13,7 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [cardFetch, setCardFetch] = useState(false);
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
@@ -34,9 +35,12 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
     }
   };
 
-  const handleRightArrowClick = () => {
+  const handleRightArrowClick = async () => {
+    if(cardFetch) return;
     scroll("right");
-    fetchOnScroll();
+    setCardFetch(true);
+    await fetchOnScroll();
+    setCardFetch(false);
   };
 
   const fetchOnScroll = async () => {
@@ -276,7 +280,7 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
               disabled={!canScrollRight}
               className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-2 rounded-full shadow-lg transition-all ${
                 !canScrollRight ? "opacity-50 hidden" : "opacity-100"
-              }`}
+              } ${cardFetch ? "opacity-50" : ""}`}
               aria-label="Scroll right"
             >
               <MdChevronRight size={24} />
