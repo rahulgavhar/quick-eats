@@ -27,6 +27,10 @@ const Header = ({
   const { mode } = useSelector((state) => state.theme);
   const { userData } = useSelector((state) => state.user);
 
+  const khargharLocation = { city: "Kharghar", lat: 19.042729, lon: 73.075492 };
+  const cbdBelapurLocation = { city: "CBD Belapur", lat: 19.015200, lon: 73.039208 };
+  const talojaLocation = { city: "Taloja", lat: 19.075419, lon: 73.091135 };
+
   return (
     <div
       className={`sticky top-0 z-40 shadow-lg p-6 max-md:p-2 transition-colors duration-300 ${
@@ -84,9 +88,21 @@ const Header = ({
                 <div className="space-y-2">
                   <button
                     className="w-full px-3 py-2 rounded-md bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
-                    onClick={() => setToDeveloperLocation(close)}
+                    onClick={() => setToDeveloperLocation(close, khargharLocation)}
                   >
-                    Developer's location (Panvel)
+                    Kharghar
+                  </button>
+                  <button
+                    className="w-full px-3 py-2 rounded-md bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
+                    onClick={() => setToDeveloperLocation(close, cbdBelapurLocation)}
+                  >
+                    CBD Belapur
+                  </button>
+                  <button
+                    className="w-full px-3 py-2 rounded-md bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
+                    onClick={() => setToDeveloperLocation(close, talojaLocation)}
+                  >
+                    Taloja
                   </button>
                   <button
                     className="w-full px-3 py-2 rounded-md bg-teal-600 text-white font-semibold hover:bg-teal-700 transition"

@@ -5,8 +5,7 @@ import { userSliceActions } from "../redux/slices/userSlice.js";
 
 const useNearbyRestaurants = () => {
   const dispatch = useDispatch();
-  const { fetchedAt, restaurants } = useSelector((state) => state.user);
-
+  const { fetchedAt, restaurants, coords: reduxCoords, developer_coords, city, state } = useSelector((state) => state.user);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,6 +20,9 @@ const useNearbyRestaurants = () => {
   });
   const [coordinates, setCoordinates] = useState(null);
   const hasInitialFetchRef = useRef(false);
+  const originalCoordsRef = useRef(null); // Store original geolocation coords
+  const originalStateRef = useRef(city); // Store original restaurant state
+  const originalCityRef = useRef(state); // Store original city
 
   const fetchRestaurants = useCallback(
     async (page = 1) => {
@@ -79,12 +81,16 @@ const useNearbyRestaurants = () => {
         
         // Cache on first page only
         if (page === 1) {
+          const filtered = enrichedRestaurants.filter(Boolean);
           dispatch(
             userSliceActions.setRestaurants(
-              enrichedRestaurants.filter(Boolean)
+              filtered
             )
           );
           dispatch(userSliceActions.setFetchedAt(Date.now()));
+          // Store original state and city on first fetch
+          originalStateRef.current = response.data.state || "";
+          originalCityRef.current = response.data.city || "";
         }
 
         setLoading(false);
@@ -131,6 +137,7 @@ const useNearbyRestaurants = () => {
       if (!window.location.hostname.includes("localhost")) {
         setData(restaurants);
         setLoading(false);
+        setAllRestaurants(restaurants);
         hasInitialFetchRef.current = true;
         return;
       }
@@ -140,7 +147,12 @@ const useNearbyRestaurants = () => {
       (position) => {
         if (isMounted) {
           const { latitude, longitude } = position.coords;
-          setCoordinates({ latitude, longitude });
+          const coords = { latitude, longitude };
+          setCoordinates(coords);
+          originalCoordsRef.current = coords; // Store original coords
+          // Initialize refs on first geolocation success
+          if (!originalStateRef.current) originalStateRef.current = "";
+          if(!originalCityRef.current) originalCityRef.current = "";
         }
       },
       (error) => {
@@ -161,6 +173,30 @@ const useNearbyRestaurants = () => {
       fetchRestaurants(1);
     }
   }, [coordinates]);
+
+  // Listen to Redux coordinates for developer location changes
+  useEffect(() => {
+    if (developer_coords && reduxCoords?.lat && reduxCoords?.lon) {
+      // Use developer coordinates from Redux
+      setCoordinates({
+        latitude: reduxCoords.lat,
+        longitude: reduxCoords.lon,
+      });
+      // Force refetch
+      hasInitialFetchRef.current = false;
+    } else if (!developer_coords && originalCoordsRef.current) {
+      // Switch back to original geolocation coordinates and restore original state
+      setCoordinates(originalCoordsRef.current);
+      dispatch(
+        userSliceActions.setState(originalStateRef.current)
+      );
+      dispatch(
+        userSliceActions.setCity(originalCityRef.current)
+      );
+      // Force refetch
+      hasInitialFetchRef.current = false;
+    }
+  }, [developer_coords, reduxCoords?.lat, reduxCoords?.lon]);
 
   return { 
     data, 

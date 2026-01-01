@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "../../redux/slices/themeSlice";
 import { useNavigate } from "react-router-dom";
 import Popup from "reactjs-popup";
+import { GiCrackedBallDunk } from "react-icons/gi";
 
 const MobileMenu = ({
   showMobileMenu,
@@ -26,6 +27,10 @@ const MobileMenu = ({
   const dispatch = useDispatch();
   const { mode } = useSelector((state) => state.theme);
   const navigate = useNavigate();
+
+  const khargharLocation = { city: "Kharghar", lat: 19.042729, lon: 73.075492 };
+  const cbdBelapurLocation = { city: "CBD Belapur", lat: 19.015200, lon: 73.039208 };
+  const talojaLocation = { city: "Taloja", lat: 19.075419, lon: 73.091135 };
 
   if (!showMobileMenu) return null;
 
@@ -90,11 +95,29 @@ const MobileMenu = ({
                 <button
                   className="w-full px-3 py-2 rounded-md bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
                   onClick={() => {
-                    setToDeveloperLocation(close);
+                    setToDeveloperLocation(close, khargharLocation);
                     setShowMobileMenu(false);
                   }}
                 >
-                  Developer's location (Panvel)
+                  Kharghar
+                </button>
+                <button
+                  className="w-full px-3 py-2 rounded-md bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
+                  onClick={() => {
+                    setToDeveloperLocation(close, cbdBelapurLocation);
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  CBD Belapur
+                </button>
+                <button
+                  className="w-full px-3 py-2 rounded-md bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
+                  onClick={() => {
+                    setToDeveloperLocation(close, talojaLocation);
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Taloja
                 </button>
                 <button
                   className="w-full px-3 py-2 rounded-md bg-teal-600 text-white font-semibold hover:bg-teal-700 transition"

@@ -137,26 +137,35 @@ const UserDashboard = ({
   };
 
   const setToDeveloperLocation = useCallback(
-    (close) => {
-      dispatch(userSliceActions.setCity("Panvel"));
+    async (close, { city, lat, lon }) => {
+      
+      dispatch(userSliceActions.setCity(city));
       dispatch(userSliceActions.setState("Maharashtra"));
       dispatch(
         userSliceActions.setCoords({
-          lat: 19.042729,
-          lon: 73.075492,
+          lat,
+          lon,
         })
       );
+
       dispatch(userSliceActions.toDev(true));
-      if (!developer_coords) window.location.reload();
+      dispatch(userSliceActions.setFetchedAt(null)); // Force refetching restaurants
       if (close) close();
     },
     [dispatch]
   );
 
   const setToCurrentLocation = useCallback(
-    (close) => {
+    async (close) => {
+      navigator.geolocation.getCurrentPosition((position => {
+        const { latitude, longitude } = position.coords;
+        dispatch(userSliceActions.setCoords({
+          lat: latitude,
+          lon: longitude,
+        }));
+      }));
       dispatch(userSliceActions.toDev(false));
-      if (developer_coords) window.location.reload();
+      dispatch(userSliceActions.setFetchedAt(null)); // Force refetching restaurants
       if (close) close();
     },
     [dispatch]
