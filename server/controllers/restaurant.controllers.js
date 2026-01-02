@@ -419,7 +419,8 @@ export const listRestaurantsNearLocation2 = async (req, res) => {
     const { lon, lat, radius = 3000, page = 1, limit = 8 } = req.query;
     const longitude = parseFloat(lon);
     const latitude = parseFloat(lat);
-    const radiusMeters = Math.min(Number(radius) || 0, 5000);
+    // radius comes in meters from client, cap at 50km
+    const radiusMeters = Math.min(Number(radius) || 3000, 50000);
     const pageNum = Math.max(parseInt(page) || 1, 1);
     const pageLimit = Math.min(Math.max(parseInt(limit) || 8, 1), 50);
 

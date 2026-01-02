@@ -56,6 +56,8 @@ const UserDashboard = ({
     data: restaurants,
     loading,
     error,
+    radius,
+    setRadius,
     pagination: restaurantPagination,
     nextPage: nextRestaurantPage,
     previousPage: previousRestaurantPage,
@@ -563,8 +565,36 @@ const UserDashboard = ({
                     Popular Restaurants Around You
                   </h2>
                   {restaurants && restaurants.length > 0 && (
-                    <div className="flex justify-end">
-                      <ShowOnMap restaurants={allRestaurants} />
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                      <div className="flex items-center gap-2">
+                        <label
+                          htmlFor="radius-select"
+                          className={`text-sm font-medium transition-colors duration-300 ${
+                            mode === "dark" ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          Radius:
+                        </label>
+                        <select
+                          id="radius-select"
+                          value={radius}
+                          onChange={(e) => setRadius(Number(e.target.value))}
+                          className={`px-3 py-2 rounded-lg font-medium border transition-colors duration-300 cursor-pointer ${
+                            mode === "dark"
+                              ? "bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
+                              : "bg-white text-gray-800 border-gray-300 hover:border-green-400"
+                          }`}
+                        >
+                          <option value={1}>1 km</option>
+                          <option value={2}>2 km</option>
+                          <option value={3}>3 km</option>
+                          <option value={5}>5 km</option>
+                          <option value={10}>10 km</option>
+                          <option value={15}>15 km</option>
+                          <option value={20}>20 km</option>
+                        </select>
+                      </div>
+                      <ShowOnMap restaurants={allRestaurants} radius={radius} />
                     </div>
                   )}
                 </div>

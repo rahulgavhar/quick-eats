@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -38,7 +38,7 @@ const createCustomIcon = (color, id) => {
 const userIcon = createCustomIcon("#10b981", "user"); // Green for user
 const restaurantIcon = createCustomIcon("#ef4444", "restaurant"); // Red for restaurants
 
-const ShowOnMap = ({ restaurants }) => {
+const ShowOnMap = ({ restaurants, radius = 3 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { coords: userLocation } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
@@ -58,6 +58,17 @@ const ShowOnMap = ({ restaurants }) => {
       }
     }
     return [20.5937, 78.9629]; // Default India center
+  };
+
+  // Calculate zoom level based on radius
+  const getZoomLevel = () => {
+    if (radius <= 1) return 15;
+    if (radius <= 2) return 14;
+    if (radius <= 3) return 13;
+    if (radius <= 5) return 12;
+    if (radius <= 10) return 12;
+    if (radius <= 15) return 11;
+    return 10;
   };
 
   return (
@@ -135,14 +146,29 @@ const ShowOnMap = ({ restaurants }) => {
             <div className="h-125 w-full">
               <MapContainer
                 center={getMapCenter()}
-                zoom={13}
+                zoom={getZoomLevel()}
+                key={`${getMapCenter().join(',')}-${radius}`}
                 style={{ height: "100%", width: "100%" }}
                 scrollWheelZoom={true}
               >
                 <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+
+                {/* Radius Circle */}
+                {userLocation?.lat && userLocation?.lon && (
+                  <Circle
+                    center={[userLocation.lat, userLocation.lon]}
+                    radius={radius * 1000} // Convert km to meters
+                    pathOptions={{
+                      color: '#10b981',
+                      fillColor: '#10b981',
+                      fillOpacity: 0.15,
+                      weight: 2,
+                      opacity: 0.6,
+                    }}
+                  />
+                )}
 
                 {/* User Location Marker */}
                 {userLocation?.lat && userLocation?.lon && (

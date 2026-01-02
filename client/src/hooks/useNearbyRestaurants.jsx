@@ -19,6 +19,7 @@ const useNearbyRestaurants = () => {
     hasPreviousPage: false,
   });
   const [coordinates, setCoordinates] = useState(null);
+  const [radius, setRadius] = useState(3);
   const hasInitialFetchRef = useRef(false);
   const originalCoordsRef = useRef(null); // Store original geolocation coords
   const originalStateRef = useRef(state); // Store original restaurant state
@@ -42,7 +43,8 @@ const useNearbyRestaurants = () => {
             lat: latitude, 
             lon: longitude,
             page,
-            limit: 8
+            limit: 8,
+            radius: radius*1000,
           },
           withCredentials: true,
         });
@@ -101,7 +103,7 @@ const useNearbyRestaurants = () => {
         }
       }
     },
-    [coordinates]
+    [coordinates, radius, dispatch]
   );
 
   const goToPage = useCallback((page) => {
@@ -198,6 +200,13 @@ const useNearbyRestaurants = () => {
     }
   }, [developer_coords, reduxCoords?.lat, reduxCoords?.lon]);
 
+  // Refetch restaurants when radius changes
+  useEffect(() => {
+    if (hasInitialFetchRef.current && coordinates) {
+      fetchRestaurants(1);
+    }
+  }, [radius, fetchRestaurants]);
+
   return { 
     data, 
     loading, 
@@ -206,7 +215,9 @@ const useNearbyRestaurants = () => {
     goToPage,
     nextPage,
     previousPage,
-    allRestaurants
+    allRestaurants,
+    radius,
+    setRadius,
   };
 };
 
