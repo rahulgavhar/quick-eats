@@ -5,7 +5,6 @@ import Header from "../components/Guest/GuestHeader";
 import MapPicker from "../components/General/MapPicker";
 import { userSliceActions } from "../redux/slices/userSlice";
 import { useDispatch } from "react-redux";
-import useGetCity from "../hooks/useGetCity";
 
 const Guest = () => {
   const { mode } = useSelector((state) => state.theme);
@@ -13,7 +12,6 @@ const Guest = () => {
   const dispatch = useDispatch();
   // Update coords in Redux store
   dispatch(userSliceActions.setCoords(coords));
-  useGetCity();
 
   return (
     <div

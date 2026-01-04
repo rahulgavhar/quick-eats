@@ -1,24 +1,18 @@
-import React from "react";
 import {
   MdLightMode,
   MdDarkMode,
   MdPerson,
-  MdRestaurantMenu,
+  MdReceipt,
   MdSettings,
   MdLogout,
-  MdAdd,
 } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import { toggleTheme } from "../../redux/slices/themeSlice";
+import { useNavigate } from "react-router-dom";
 
-const OwnerMobileMenu = ({
+const MobileMenu = ({
   showMobileMenu,
   setShowMobileMenu,
-  hasRestaurant,
-  onAddItem,
-  onAddRestaurant,
-  onManageRestaurant,
   handleLogout,
 }) => {
   const dispatch = useDispatch();
@@ -43,42 +37,28 @@ const OwnerMobileMenu = ({
             className={`hover:opacity-80 transition bg-transparent ${
               mode === "dark" ? "text-white" : "text-gray-900"
             }`}
-            title={mode === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            title={
+              mode === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
+            }
           >
-            {mode === "dark" ? <MdLightMode size={24} /> : <MdDarkMode size={24} />}
+            {mode === "dark" ? (
+              <MdLightMode size={24} />
+            ) : (
+              <MdDarkMode size={24} />
+            )}
           </button>
         </div>
-
-        <button
-          onClick={() => {
-            if (hasRestaurant) {
-              onAddItem();
-            } else {
-              onAddRestaurant();
-            }
-            setShowMobileMenu(false);
-          }}
-          className={`w-full flex items-center justify-between px-4 py-3 rounded ${
-            mode === "dark" ? "bg-gray-800 hover:bg-gray-600" : "bg-green-50 hover:bg-green-100"
-          }`}
-        >
-          <span
-            className={`font-semibold flex items-center gap-2 ${
-              mode === "dark" ? "text-green-400" : "text-green-700"
-            }`}
-          >
-            <MdAdd size={18} /> {hasRestaurant ? "Add Item" : "Add Restaurant"}
-          </span>
-        </button>
 
         <div className="grid grid-cols-1 gap-2">
           <button
             className={`text-left px-4 py-3 rounded flex items-center gap-2 ${
-              mode === "dark" ? "hover:bg-green-600 bg-gray-800 text-white" : "hover:bg-green-100"
+              mode === "dark"
+                ? "hover:bg-green-600 bg-gray-800 text-white"
+                : "hover:bg-green-100"
             }`}
             onClick={() => {
-              navigate("/profile");
               setShowMobileMenu(false);
+              navigate("/profile");
             }}
           >
             <MdPerson size={20} /> My Profile
@@ -86,28 +66,17 @@ const OwnerMobileMenu = ({
 
           <button
             className={`text-left px-4 py-3 rounded flex items-center gap-2 ${
-              mode === "dark" ? "hover:bg-green-600 bg-gray-800 text-white" : "hover:bg-green-100"
+              mode === "dark"
+                ? "hover:bg-green-600 bg-gray-800 text-white"
+                : "hover:bg-green-100"
             }`}
             onClick={() => {
-              if (onManageRestaurant) onManageRestaurant();
               setShowMobileMenu(false);
+              navigate("/profile");
             }}
           >
-            <MdRestaurantMenu size={20} /> Manage Restaurant
+            <MdSettings size={20} /> Settings
           </button>
-
-          <button
-            className={`text-left px-4 py-3 rounded flex items-center gap-2 ${
-              mode === "dark" ? "hover:bg-green-600 bg-gray-800 text-white" : "hover:bg-green-100"
-            }`}
-            onClick={() => {
-              navigate("/my-orders");
-              setShowMobileMenu(false);
-            }}
-          >
-            <MdSettings size={20} /> My Orders
-          </button>
-
           <button
             className={`text-left px-4 py-3 rounded flex items-center gap-2 ${
               mode === "dark"
@@ -115,7 +84,7 @@ const OwnerMobileMenu = ({
                 : "text-red-600 hover:bg-red-100"
             }`}
             onClick={() => {
-              if (handleLogout) handleLogout();
+              handleLogout();
               setShowMobileMenu(false);
             }}
           >
@@ -127,4 +96,4 @@ const OwnerMobileMenu = ({
   );
 };
 
-export default OwnerMobileMenu;
+export default MobileMenu;

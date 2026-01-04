@@ -15,10 +15,8 @@ import ManageRestaurant from "./Owner/ManageRestaurant";
 import Footer from "./General/Footer";
 import { toast } from "react-toastify";
 import Loader from "./General/Loader";
-import useGetCity from "../hooks/useGetCity.jsx";
 
 const OwnerDashboard = () => {
-  useGetCity();
   const dispatch = useDispatch();
   const { userData } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
@@ -308,9 +306,9 @@ const OwnerDashboard = () => {
         ...prev,
         items: prev.items.filter((item) => item._id !== itemId),
       }));
+      dispatch(ownerSliceActions.deleteItemFromRestaurant(itemId));
+      toast.success("Item deleted successfully");
     }
-    dispatch(ownerSliceActions.deleteItemFromRestaurant(itemId));
-    toast.success("Item deleted successfully");
   };
 
   // Handle update item

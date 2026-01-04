@@ -120,7 +120,6 @@ export const getUserCity = async (req, res) => {
   }
 };
 
-
 export const updateUserProfile = async (req, res) => {
   try {
     const userId = req.userId;
@@ -147,8 +146,66 @@ export const updateUserProfile = async (req, res) => {
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // If role was updated, refresh the token with new role
+    if (role) {
+      const genToken = (await import("../utils/token.js")).default;
+      const newToken = genToken(updatedUser._id, updatedUser.role);
+      
+      res.cookie("token", newToken, {
+        httpOnly: true,
+        secure: ENV.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+    }
+
     res.status(200).json(updatedUser);
   } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const updateUserLocation = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const { location } = req.body;
+
+    if (
+      !location ||
+      typeof location.lat !== "number" ||
+      typeof location.lon !== "number"
+    ) {
+      return res.status(400).json({ message: "Invalid location data" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          location: {
+            type: "Point",
+            coordinates: [location.lon, location.lat],
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    )
+      .select(
+        "-password -otp -isOtpVerified -otpExpiry -otpRequests -otpRequestsResetTime"
+      )
+      .lean();
+    
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("[updateUserLocation] Error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

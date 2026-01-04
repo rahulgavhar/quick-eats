@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import DeliveryBoy from "../components/DeliveryBoy.jsx";
+import DeliveryBoyDashboard from "../components/DeliveryBoyDashboard.jsx";
 import OwnerDashboard from "../components/OwnerDashboard.jsx";
 import UserDashboard from "../components/UserDashboard.jsx";
 
@@ -25,7 +25,7 @@ const Home = ({ activePopup, popupShown, setActivePopup, setPopupShown }) => {
         />
       )}
       {userData.role === "deliveryBoy" && (
-        <DeliveryBoy
+        <DeliveryBoyDashboard
           activePopup={activePopup}
           popupShown={popupShown}
           setActivePopup={setActivePopup}

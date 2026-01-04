@@ -277,6 +277,8 @@ const Profile = () => {
     if (!validateForm()) return;
 
     setLoading(true);
+    const roleChanged = formData.role !== userData.role;
+    
     try {
       const updateData = {
         firstName: formData.firstName,
@@ -322,6 +324,14 @@ const Profile = () => {
 
       toast.success("Profile updated successfully!");
       setIsEditing(false);
+
+      // If role changed, redirect to home to refresh with new token
+      if (roleChanged) {
+        toast.info("Redirecting to apply role changes...");
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
+      }
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || "Failed to update profile";

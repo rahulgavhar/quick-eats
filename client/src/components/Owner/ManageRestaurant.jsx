@@ -124,7 +124,15 @@ const ManageRestaurant = ({ restaurant, onClose, onAddItem, onUpdateItem, onDele
                     }`}
                   >
                     <div className="flex items-center gap-3 flex-1">
-                      <span className="text-3xl">{item.image || "🍽️"}</span>
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      ) : (
+                        <span className="text-3xl">🍽️</span>
+                      )}
                       <div>
                         <h4 className="font-semibold">{item.name}</h4>
                         <p

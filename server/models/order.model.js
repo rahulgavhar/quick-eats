@@ -29,6 +29,16 @@ const orderSchema = new mongoose.Schema(
           },
         ],
         subTotal: { type: Number, required: true, min: 0 },
+        assignment: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "DeliveryAssignment",
+          default: null,
+        },
+        assignedDeliveryBoy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
       },
     ],
     totalAmount: { type: Number, required: true },

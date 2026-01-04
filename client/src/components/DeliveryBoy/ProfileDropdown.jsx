@@ -1,21 +1,16 @@
 import React from "react";
-import {
-  MdPerson,
-  MdRestaurantMenu,
-  MdLogout,
-  MdManageAccounts,
-} from "react-icons/md";
+import { MdPerson, MdReceipt, MdSettings, MdLogout } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-const OwnerProfileDropdown = ({
-  handleLogout,
-  setShowProfileDropdown,
-  onManageRestaurant,
-}) => {
+const ProfileDropdown = ({ handleLogout, setShowProfileDropdown }) => {
   const navigate = useNavigate();
   const { userData } = useSelector((state) => state.user);
   const { mode } = useSelector((state) => state.theme);
+
+  const roleLabel = userData?.role
+    ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1)
+    : null;
 
   return (
     <div
@@ -36,24 +31,29 @@ const OwnerProfileDropdown = ({
               mode === "dark" ? "text-white" : "text-gray-800"
             }`}
           >
-            {userData?.name || userData?.fullName || userData?.username || "Owner"}
+            {userData?.name ||
+              userData?.fullName ||
+              userData?.username ||
+              "Delivery Partner"}
           </p>
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded-full border ${
-              mode === "dark"
-                ? "text-green-300 border-gray-600"
-                : "text-green-800 border-green-300"
-            }`}
-          >
-            Owner
-          </span>
+          {roleLabel && (
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                mode === "dark"
+                  ? "text-green-300 border-gray-600"
+                  : "text-green-800 border-green-300"
+              }`}
+            >
+              {roleLabel}
+            </span>
+          )}
         </div>
         <p
           className={`text-sm ${
             mode === "dark" ? "text-gray-400" : "text-gray-600"
           }`}
         >
-          {userData?.email || "owner@example.com"}
+          {userData?.email || "delivery@example.com"}
         </p>
       </div>
 
@@ -75,8 +75,8 @@ const OwnerProfileDropdown = ({
 
         <button
           onClick={() => {
-            onManageRestaurant();
             setShowProfileDropdown(false);
+            navigate("/profile");
           }}
           className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors duration-200 ${
             mode === "dark"
@@ -84,30 +84,15 @@ const OwnerProfileDropdown = ({
               : "text-gray-700 hover:bg-green-50 hover:text-green-600"
           }`}
         >
-          <MdManageAccounts size={20} />
-          <span>Manage Restaurant</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setShowProfileDropdown(false);
-            navigate("/my-orders");
-          }}
-          className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors duration-200 ${
-            mode === "dark"
-              ? "text-gray-300  hover:text-green-500 bg-gray-800"
-              : "text-gray-700 hover:bg-green-50 hover:text-green-600"
-          }`}
-        >
-          <MdRestaurantMenu size={20} />
-          <span>My Orders</span>
+          <MdSettings size={20} />
+          <span>Settings</span>
         </button>
 
         <div
           className={`border-t ${
             mode === "dark" ? "border-gray-700" : "border-gray-200"
           }`}
-        />
+        ></div>
 
         <button
           onClick={handleLogout}
@@ -125,4 +110,4 @@ const OwnerProfileDropdown = ({
   );
 };
 
-export default OwnerProfileDropdown;
+export default ProfileDropdown;

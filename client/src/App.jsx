@@ -14,6 +14,7 @@ import Guest from "./pages/Guest.jsx";
 import ErrorComponent from "./components/General/ErrorComponent";
 import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders.jsx";
+import useGetCity from "./hooks/useGetCity.jsx";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -21,6 +22,8 @@ const App = () => {
   const { userData, loading, error } = useSelector((state) => state.user);
   const [activePopup, setActivePopup] = useState(false);
   const [popupShown, setPopupShown] = useState(false);
+
+  useGetCity();
 
   useEffect(() => {
     dispatch(fetchUserData());
