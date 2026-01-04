@@ -12,6 +12,8 @@ const APP_KEYS =
     "REDIS_URL",
     "REDIS_RESTAURANT_URL",
     "CLOUDINARY_URL",
+    "RAZORPAY_API",
+    "RAZORPAY_KEY_SECRET",
   ];
 
 /* 1. Validate required app keys */

@@ -53,6 +53,9 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "Pending",
     },
+    paymentFlag: { type: Boolean, default: false },
+    razorpayOrderId: { type: String, default: null },
+    razorpayPaymentId: { type: String, default: null },
   },
   { timestamps: true }
 );

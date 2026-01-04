@@ -2,6 +2,13 @@ import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
 import RestaurantProfile from "../models/restaurantProfile.model.js";
 import DeliveryAssignment from "../models/deliveryAssignment.model.js";
+import RazorPay from "razorpay";
+import ENV from "../config/env.js";
+
+let instance = new RazorPay({
+  key_id: ENV.RAZORPAY_API,
+  key_secret: ENV.RAZORPAY_KEY_SECRET,
+});
 
 export const placeOrder = async (req, res) => {
   try {
@@ -20,6 +27,22 @@ export const placeOrder = async (req, res) => {
       return res
         .status(400)
         .json({ message: "All order details are required." });
+    }
+
+    // Create Razorpay order ONCE for the total amount (before the loop)
+    let razorpayOrder = null;
+    if (paymentMethod === "Online") {
+      const options = {
+        amount: Math.round(parseFloat(totalAmount) * 100),
+        currency: "USD",
+        receipt: `receipt_by_${userId}`,
+      };
+      razorpayOrder = await instance.orders.create(options);
+      if (!razorpayOrder) {
+        return res
+          .status(500)
+          .json({ message: "Error creating payment order." });
+      }
     }
 
     // Group items by restaurantId
@@ -45,6 +68,7 @@ export const placeOrder = async (req, res) => {
         0
       );
 
+      // Create order document
       const newOrder = new Order({
         orders: [
           {
@@ -67,6 +91,8 @@ export const placeOrder = async (req, res) => {
         },
         totalAmount: subTotal,
         status: "Pending",
+        razorpayOrderId: paymentMethod === "Online" ? razorpayOrder.id : null,
+        paymentFlag: paymentMethod === "Online" ? false : true,
       });
 
       const savedOrder = await newOrder.save();
@@ -95,9 +121,71 @@ export const placeOrder = async (req, res) => {
       message: "Orders placed successfully.",
       orders: savedOrders,
       orderCount: savedOrders.length,
+      orderIds: savedOrders.map((order) => order._id),
+      razorpayOrder: razorpayOrder,
     });
   } catch (error) {
     console.error("Error placing order:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+export const verifyPayment = async (req, res) => {
+  try {
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, orderIds } = req.body;
+
+    if (!razorpayOrderId || !orderIds || orderIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Razorpay order ID and order IDs are required." });
+    }
+
+    // Verify payment signature (important for security)
+    const crypto = require("crypto");
+    const expectedSignature = crypto
+      .createHmac("sha256", ENV.RAZORPAY_KEY_SECRET)
+      .update(razorpayOrderId + "|" + razorpayPaymentId)
+      .digest("hex");
+
+    if (expectedSignature !== razorpaySignature) {
+      return res.status(400).json({ message: "Invalid payment signature." });
+    }
+
+    // Update all orders with the same razorpay order ID
+    const updatedOrders = [];
+    for (const orderId of orderIds) {
+      const order = await Order.findById(orderId);
+      if (!order) {
+        console.warn(`Order not found: ${orderId}`);
+        continue;
+      }
+      // Verify the razorpay order ID matches
+      if (order.razorpayOrderId !== razorpayOrderId) {
+        console.warn(`Razorpay order ID mismatch for order: ${orderId}`);
+        continue;
+      }
+      // Update payment flag
+      order.paymentFlag = true;
+      order.razorpayPaymentId = razorpayPaymentId;
+      await order.save();
+
+      await order.populate("orders.restaurantId", "name city state rating");
+      await order.populate("orders.items.itemId", "name price image category");
+      
+      updatedOrders.push(order);
+    }
+
+    if (updatedOrders.length === 0) {
+      return res.status(404).json({ message: "No orders were updated." });
+    }
+
+    return res.status(200).json({ 
+      message: "Payment verified and orders updated.", 
+      orders: updatedOrders 
+    });
+
+  } catch (error) {
+    console.error("Error verifying payment:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };

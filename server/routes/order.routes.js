@@ -10,6 +10,7 @@ import {
   getDeliveryBoyOrders,
   acceptDeliveryAssignment,
   completeDeliveryAssignment,
+  verifyPayment,
 } from '../controllers/order.controllers.js';
 import { isAuth, authorizeRoles } from '../middlewares/auth.js';
 
@@ -23,6 +24,8 @@ orderRouter.get('/all', isAuth, authorizeRoles(['user', 'owner']), (req, res) =>
   }
 });
 orderRouter.put('/status/:id', isAuth, authorizeRoles(['owner']), updateOrderStatus);
+
+orderRouter.post('/verify-payment', isAuth, authorizeRoles(['user']), verifyPayment);
 
 // Delivery partner endpoints
 orderRouter.get(
