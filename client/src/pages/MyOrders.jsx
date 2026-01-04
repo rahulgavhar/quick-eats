@@ -3,10 +3,25 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MdRefresh } from "react-icons/md";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { toast } from "react-toastify";
+
+// Fix for default marker icon in React-Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
 const MyOrders = () => {
   const { mode } = useSelector((state) => state.theme);
-  const { userData } = useSelector((state) => state.user);
+  const { userData, coords } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +31,9 @@ const MyOrders = () => {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [availableBoys, setAvailableBoys] = useState([]);
+  const [otp, setOtp] = useState("");
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [deliveryBoyLocation, setDeliveryBoyLocation] = useState({});
 
   const apiURL = import.meta.env.VITE_API_URL;
   const isOwner = userData?.role === "owner";
@@ -46,6 +64,50 @@ const MyOrders = () => {
     setRefreshing(true);
     await fetchOrders();
     setRefreshing(false);
+  };
+
+  const handleVerifyOtp = async (orderId) => {
+    if (!otp || otp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      await axios.post(
+        `${apiURL}/api/orders/verify-otp/${orderId}`,
+        { otp },
+        { withCredentials: true }
+      );
+      toast.success("OTP verified successfully!");
+      setOtp("");
+      await fetchOrders(); // Refresh orders
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      toast.error(error.response?.data?.message || "Invalid OTP. Please try again.");
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const fetchDeliveryBoyLocation = async (orderId) => {
+    try {
+      const response = await axios.get(
+        `${apiURL}/api/orders/deliveryboy-location/${orderId}`,
+        { withCredentials: true }
+      );
+
+      if (response.status === 200 && response.data.code === "NO_DELIVERYBOY_FOUND") {
+        return;
+      }
+
+      setDeliveryBoyLocation((prev) => ({
+        ...prev,
+        [orderId]: response.data.location,
+      }));
+    } catch (error) {
+      console.error("Error fetching delivery boy location:", error);
+    }
   };
 
   const handleStatusUpdate = async (orderId, newStatus) => {
@@ -146,6 +208,36 @@ const MyOrders = () => {
       ? allOrders
       : allOrders.filter((order) => order.status === filter);
 
+  // Get orders that are out for delivery (after flattening)
+  const outForDeliveryOrders = allOrders.filter(
+    (order) => order.status === "Out for Delivery"
+  );
+
+  // Fetch delivery boy location for orders that are out for delivery
+  useEffect(() => {
+    // Only fetch delivery boy location after orders are loaded
+    if (loading || orders.length === 0) {
+      return;
+    }
+
+    // Fetch delivery boy location for orders that are out for delivery
+    if (outForDeliveryOrders.length === 0) {
+      return;
+    }
+    outForDeliveryOrders.forEach((order) => {
+      fetchDeliveryBoyLocation(order._id);
+    });
+
+    // Set up polling for real-time updates (every 10 seconds)
+    const interval = setInterval(() => {
+      outForDeliveryOrders.forEach((order) => {
+        fetchDeliveryBoyLocation(order._id);
+      });
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [orders, loading, outForDeliveryOrders.length]);
+
   if (loading) {
     return (
       <div
@@ -205,7 +297,7 @@ const MyOrders = () => {
     >
       {/* Header */}
       <div
-        className={`sticky top-0 z-10 shadow-md transition-colors duration-300 ${
+        className={`sticky top-0 shadow-md transition-colors z-2000 duration-300 ${
           mode === "dark"
             ? "bg-gray-800 border-b border-gray-700"
             : "bg-white border-b border-gray-200"
@@ -606,6 +698,195 @@ const MyOrders = () => {
                         , {order.deliveryAddress?.coordinates?.lon?.toFixed(4)}
                       </p>
                     </div>
+
+                    {/* Delivery Boy Location Map & OTP Verification - Only for Out for Delivery */}
+                    {order.status === "Out for Delivery" && !isOwner && (
+                      <div
+                        className={`p-6 border-b transition-colors duration-300 ${
+                          mode === "dark" ? "border-gray-700" : "border-gray-200"
+                        }`}
+                      >
+                        <h3
+                          className={`font-bold mb-4 flex items-center gap-2 transition-colors duration-300 ${
+                            mode === "dark" ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          <svg
+                            className="w-5 h-5 text-blue-500"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                          </svg>
+                          Track Delivery Boy
+                        </h3>
+
+                        {/* Map */}
+                        <div className="mb-4 rounded-lg overflow-hidden border-2 border-blue-400">
+                          <MapContainer
+                            key={`${order._id}-${deliveryBoyLocation[order._id]?.lat ?? "no-lat"}-${deliveryBoyLocation[order._id]?.lon ?? "no-lon"}`}
+                            center={[
+                              deliveryBoyLocation[order._id]?.lat ??
+                                order.deliveryAddress?.coordinates?.lat ??
+                                20.5937,
+                              deliveryBoyLocation[order._id]?.lon ??
+                                order.deliveryAddress?.coordinates?.lon ??
+                                78.9629,
+                            ]}
+                            zoom={13}
+                            style={{ height: "300px", width: "100%" }}
+                          >
+                            <TileLayer
+                              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            {/* Delivery Boy Location Marker */}
+                            {deliveryBoyLocation[order._id] && (
+                              <Marker
+                                position={[
+                                  deliveryBoyLocation[order._id].lat,
+                                  deliveryBoyLocation[order._id].lon,
+                                ]}
+                                icon={L.icon({
+                                  iconUrl:
+                                    "https://images.vexels.com/media/users/3/242798/isolated/preview/92d29634dfdaeb3ff4eb77fbe49a6652-motorbike-semi-flat.png",
+                                  shadowUrl:
+                                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                                  iconSize: [40, 62],
+                                  iconAnchor: [12, 41],
+                                  popupAnchor: [1, -34],
+                                  shadowSize: [41, 41],
+                                })}
+                              >
+                                <Popup>
+                                  <strong>🚗 Delivery Boy Location</strong>
+                                  <br />
+                                  On the way to your location!
+                                </Popup>
+                              </Marker>
+                            )}
+                            {/* User's Current Location Marker */}
+                            {coords?.lat && coords?.lon && (
+                              <Marker
+                                position={[
+                                  coords.lat,
+                                  coords.lon,
+                                ]}
+                                icon={L.icon({
+                                  iconUrl:
+                                    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+                                  shadowUrl:
+                                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                                  iconSize: [25, 41],
+                                  iconAnchor: [12, 41],
+                                  popupAnchor: [1, -34],
+                                  shadowSize: [41, 41],
+                                })}
+                              >
+                                <Popup>
+                                  <strong>📍 Your Current Location</strong>
+                                  <br />
+                                  {coords.lat.toFixed(4)}, {coords.lon.toFixed(4)}
+                                </Popup>
+                              </Marker>
+                            )}
+                            {/* Delivery Address Marker */}
+                            {order.deliveryAddress?.coordinates && (
+                              <Marker
+                                position={[
+                                  order.deliveryAddress.coordinates.lat,
+                                  order.deliveryAddress.coordinates.lon,
+                                ]}
+                                icon={L.icon({
+                                  iconUrl:
+                                    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+                                  shadowUrl:
+                                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+                                  iconSize: [25, 41],
+                                  iconAnchor: [12, 41],
+                                  popupAnchor: [1, -34],
+                                  shadowSize: [41, 41],
+                                })}
+                              >
+                                <Popup>
+                                  <strong>🏠 Delivery Address</strong>
+                                  <br />
+                                  {order.deliveryAddress.addressLine}
+                                </Popup>
+                              </Marker>
+                            )}
+                          </MapContainer>
+                          {!deliveryBoyLocation[order._id] && (
+                            <div
+                              className={`px-4 py-2 text-sm ${
+                                mode === "dark"
+                                  ? "bg-gray-800 text-gray-300"
+                                  : "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              DeliverBoy will be assigned shortly. Please wait.
+                            </div>
+                          )}
+                        </div>
+
+                        {/* OTP Verification */}
+                        <div className="mt-4">
+                          <h4
+                            className={`font-semibold mb-3 transition-colors duration-300 ${
+                              mode === "dark" ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            🔒 Verify Delivery OTP
+                          </h4>
+                          <p
+                            className={`text-sm mb-3 transition-colors duration-300 ${
+                              mode === "dark"
+                                ? "text-gray-400"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            Enter the 6-digit OTP provided by the delivery boy
+                            to confirm delivery.
+                          </p>
+                          <div className="flex gap-3">
+                            <input
+                              type="text"
+                              maxLength="6"
+                              placeholder="Enter 6-digit OTP"
+                              value={otp}
+                              onChange={(e) =>
+                                setOtp(e.target.value.replace(/\D/g, ""))
+                              }
+                              className={`flex-1 px-4 py-3 rounded-lg border-2 text-center text-lg font-bold tracking-widest transition-all duration-300 ${
+                                mode === "dark"
+                                  ? "bg-gray-700 border-gray-600 text-white focus:border-blue-500"
+                                  : "bg-white border-gray-300 text-gray-900 focus:border-blue-500"
+                              } focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                            />
+                            <button
+                              onClick={() => handleVerifyOtp(order._id)}
+                              disabled={
+                                verifyingOtp || !otp || otp.length !== 6
+                              }
+                              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                                verifyingOtp || !otp || otp.length !== 6
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+                              }`}
+                            >
+                              {verifyingOtp ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  Verifying...
+                                </div>
+                              ) : (
+                                "Verify"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Payment Method */}
                     <div

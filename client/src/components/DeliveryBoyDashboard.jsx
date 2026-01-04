@@ -229,7 +229,6 @@ const DeliveryBoyDashboard = () => {
                       assignment={assignment}
                       mode={mode}
                       onAccept={handleAccept}
-                      onComplete={handleComplete}
                     />
                   ))}
                 </div>
@@ -262,7 +261,6 @@ const DeliveryBoyDashboard = () => {
                       assignment={assignment}
                       mode={mode}
                       onAccept={handleAccept}
-                      onComplete={handleComplete}
                     />
                   ))}
                 </div>

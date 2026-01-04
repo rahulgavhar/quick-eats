@@ -1,4 +1,5 @@
 import { useSelector } from "react-redux";
+import { useEffect } from "react";
 import useLonLat from "../hooks/useLonLat";
 import Footer from "../components/General/Footer";
 import Header from "../components/Guest/GuestHeader";
@@ -10,8 +11,11 @@ const Guest = () => {
   const { mode } = useSelector((state) => state.theme);
   const { coords, loading: locLoading, error: locError, refresh } = useLonLat();
   const dispatch = useDispatch();
+
   // Update coords in Redux store
-  dispatch(userSliceActions.setCoords(coords));
+  useEffect(() => {
+    dispatch(userSliceActions.setCoords(coords));
+  }, [coords, dispatch]);
 
   return (
     <div

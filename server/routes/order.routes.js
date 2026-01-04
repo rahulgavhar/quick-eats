@@ -9,8 +9,9 @@ import {
   updateOrderStatus,
   getDeliveryBoyOrders,
   acceptDeliveryAssignment,
-  completeDeliveryAssignment,
   verifyPayment,
+  getDeliveryBoyLocation,
+  verifyOTP
 } from '../controllers/order.controllers.js';
 import { isAuth, authorizeRoles } from '../middlewares/auth.js';
 
@@ -27,6 +28,8 @@ orderRouter.put('/status/:id', isAuth, authorizeRoles(['owner']), updateOrderSta
 
 orderRouter.post('/verify-payment', isAuth, authorizeRoles(['user']), verifyPayment);
 
+orderRouter.post('/verify-otp/:id', isAuth, authorizeRoles(['user']), verifyOTP);
+
 // Delivery partner endpoints
 orderRouter.get(
   '/delivery/my',
@@ -42,12 +45,11 @@ orderRouter.put(
   acceptDeliveryAssignment,
 );
 
-orderRouter.put(
-  '/delivery/:id/complete',
+orderRouter.get(
+  '/deliveryboy-location/:orderId',
   isAuth,
-  authorizeRoles(['deliveryBoy']),
-  completeDeliveryAssignment,
+  authorizeRoles(['user']),
+  getDeliveryBoyLocation,
 );
-
 
 export default orderRouter;

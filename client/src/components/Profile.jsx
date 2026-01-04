@@ -281,8 +281,7 @@ const Profile = () => {
     
     try {
       const updateData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        fullName: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         mobile: formData.mobile,
         countryCode: formData.countryCode,

@@ -5,7 +5,7 @@ import { userSliceActions } from "../redux/slices/userSlice.js";
 
 const useGetCity = () => {
   const dispatch = useDispatch();
-  const { coords, developer_coords } = useSelector((state) => state.user);
+  const { coords, developer_coords, userData } = useSelector((state) => state.user);
   const apiURL = import.meta.env.VITE_API_URL;
   if (!apiURL) {
     console.error("API_URL not defined");
@@ -23,22 +23,24 @@ const useGetCity = () => {
             lon: 73.075492,
           })
         );
-        try {
-          await axios.post(
-            `${apiURL}/api/user/update-location`,
-            {
-              location: {
-                lat: 19.042729,
-                lon: 73.075492,
+        if (userData) {
+          try {
+            await axios.post(
+              `${apiURL}/api/user/update-location`,
+              {
+                location: {
+                  lat: 19.042729,
+                  lon: 73.075492,
+                },
               },
-            },
-            { withCredentials: true }
-          );
-        } catch (locationError) {
-          console.error(
-            "Error updating location in DB:",
-            locationError.response?.data || locationError.message
-          );
+              { withCredentials: true }
+            );
+          } catch (locationError) {
+            console.error(
+              "Error updating location in DB:",
+              locationError.response?.data || locationError.message
+            );
+          }
         }
 
         return;
@@ -68,38 +70,40 @@ const useGetCity = () => {
             );
           }
 
-          try {
-            const response = await axios.post(
-              `${apiURL}/api/user/get-city`,
-              { latitude, longitude },
-              { withCredentials: true }
-            );
-
-            dispatch(userSliceActions.setCity(response.data.city));
-            dispatch(userSliceActions.setState(response.data.state));
-
-            // Update user location in DB after successfully getting city
+          if (userData) {
             try {
-              await axios.post(
-                `${apiURL}/api/user/update-location`,
-                {
-                  location: {
-                    lat: latitude,
-                    lon: longitude,
-                  },
-                },
+              const response = await axios.post(
+                `${apiURL}/api/user/get-city`,
+                { latitude, longitude },
                 { withCredentials: true }
               );
-              console.log("Location updated in DB:", { latitude, longitude });
-            } catch (locationError) {
-              console.error(
-                "Error updating location in DB:",
-              locationError.response?.data || locationError.message
-            );
+
+              dispatch(userSliceActions.setCity(response.data.city));
+              dispatch(userSliceActions.setState(response.data.state));
+
+              // Update user location in DB after successfully getting city
+              try {
+                await axios.post(
+                  `${apiURL}/api/user/update-location`,
+                  {
+                    location: {
+                      lat: latitude,
+                      lon: longitude,
+                    },
+                  },
+                  { withCredentials: true }
+                );
+                console.log("Location updated in DB:", { latitude, longitude });
+              } catch (locationError) {
+                console.error(
+                  "Error updating location in DB:",
+                  locationError.response?.data || locationError.message
+                );
+              }
+            } catch (error) {
+              console.error("Error fetching city data:", error);
+            }
           }
-        } catch (error) {
-          console.error("Error fetching city data:", error);
-        }
       },
       (error) => {
         console.error("Geolocation error:", error.message);
@@ -108,7 +112,7 @@ const useGetCity = () => {
     };
     
     setupLocation();
-  }, [dispatch, coords.lat, coords.lon, developer_coords, apiURL]);
+  }, [dispatch, coords.lat, coords.lon, developer_coords, apiURL, userData]);
 
   return null;
 };

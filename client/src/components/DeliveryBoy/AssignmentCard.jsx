@@ -1,7 +1,7 @@
 import React from "react";
 import { MdCheckCircle, MdDirectionsBike, MdLocationOn, MdPhone } from "react-icons/md";
 
-const AssignmentCard = ({ assignment, mode = "light", onAccept, onComplete }) => {
+const AssignmentCard = ({ assignment, mode = "light", onAccept }) => {
   const isDark = mode === "dark";
   const status = assignment.status || "unassigned";
   const statusColor = {
@@ -64,14 +64,6 @@ const AssignmentCard = ({ assignment, mode = "light", onAccept, onComplete }) =>
             className="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-1"
           >
             <MdCheckCircle /> Accept
-          </button>
-        )}
-        {status === "assigned" && (
-          <button
-            onClick={() => onComplete?.(assignment._id)}
-            className="px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-1"
-          >
-            <MdCheckCircle /> Complete
           </button>
         )}
       </div>

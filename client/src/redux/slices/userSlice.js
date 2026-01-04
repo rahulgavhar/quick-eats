@@ -31,6 +31,10 @@ export const fetchUserData = createAsyncThunk(
       });
       return res.data;
     } catch (err) {
+      // If 401, user is not authenticated - return null instead of error
+      if (err.response?.status === 401) {
+        return null;
+      }
       return rejectWithValue(err.response?.data || "Failed to fetch user data");
     }
   }

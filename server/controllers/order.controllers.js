@@ -190,6 +190,42 @@ export const verifyPayment = async (req, res) => {
   }
 };
 
+export const verifyOTP = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const orderId = req.params.id;
+
+    if (!otp || !orderId) {
+      return res.status(400).json({ message: "OTP and order ID are required." });
+    }
+
+    // Find the delivery assignment for this order
+    const assignment = await DeliveryAssignment.findOne({ orderId: orderId });
+    if (!assignment) {
+      return res.status(404).json({ message: "Delivery assignment not found." });
+    }
+    // Verify OTP
+    if (assignment.otp.toString() !== otp.toString()) {
+      return res.status(400).json({ message: "Invalid OTP." });
+    }
+
+    // Mark assignment and order as completed/delivered
+    assignment.status = "completed";
+    await assignment.save();
+
+    const order = await Order.findOne({ _id: orderId });
+    if (order) {
+      order.status = "Delivered";
+      await order.save();
+    }
+
+    res.status(200).json({ message: "OTP verified successfully." });
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
 export const getUserOrders = async (req, res, next) => {
   try {
     const userId = req.userId;
@@ -597,34 +633,36 @@ export const acceptDeliveryAssignment = async (req, res) => {
   }
 };
 
-// Delivery boy marks delivery completed
-export const completeDeliveryAssignment = async (req, res) => {
+export const getDeliveryBoyLocation = async (req, res) => {
   try {
     const userId = req.userId;
-    const assignmentId = req.params.id;
+    const orderId = req.params.orderId;
+    const assignment = await DeliveryAssignment.findOne({
+      orderId: orderId,
+    }).populate('assignedTo', 'location fullName mobile');
 
-    const assignment = await DeliveryAssignment.findById(assignmentId);
     if (!assignment) {
-      return res.status(404).json({ message: "Assignment not found." });
+      return res.status(200).json({ code: "NO_DELIVERYBOY_FOUND" ,message: "Assignment not found." });
     }
 
-    if (assignment.assignedTo?.toString() !== userId.toString()) {
-      return res.status(403).json({ message: "Not your assignment." });
+    const deliveryBoy = assignment.assignedTo;
+    if (!deliveryBoy || !deliveryBoy.location) {
+      return res.status(404).json({ message: "Delivery boy location not found." });
     }
-
-    assignment.status = "completed";
-    await assignment.save();
-
-    // Update order status to Delivered and persist
-    const order = await Order.findOne({ "orders.assignment": assignmentId });
-    if (order) {
-      order.status = "Delivered";
-      await order.save();
-    }
-
-    res.status(200).json({ success: true, message: "Delivery completed." });
+    res.status(200).json({
+      success: true,
+      location: {
+        lat: deliveryBoy.location.coordinates[1],
+        lon: deliveryBoy.location.coordinates[0],
+      },
+      deliveryBoy: {
+        id: deliveryBoy._id,
+        fullName: deliveryBoy.fullName,
+        mobile: deliveryBoy.mobile,
+      }
+    });
   } catch (error) {
-    console.error("Error completing assignment:", error);
+    console.error("Error fetching delivery boy location:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };

@@ -126,10 +126,10 @@ export const updateUserProfile = async (req, res) => {
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const { name, email, mobile, countryCode, role } = req.body;
+    const { fullName, email, mobile, countryCode, role } = req.body;
 
     const updateData = {};
-    if (name) updateData.name = name;
+    if (fullName) updateData.fullName = fullName;
     if (email) updateData.email = email;
     if (mobile) updateData.mobile = mobile;
     if (countryCode) updateData.countryCode = countryCode;
