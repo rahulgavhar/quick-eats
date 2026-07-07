@@ -74,6 +74,11 @@ const SampleItems = ({ allRestaurants, addToCart }) => {
       // Converting to have only ids
       const restaurantIds = allRestaurants.map((r) => r._id);
 
+      if(restaurantIds.length === 0) {
+        setSampleItems([]);
+        return;
+      }
+
       const response = await axios.post(
         `${apiURL}/api/items/samples`,
         { restaurants: restaurantIds, lastFetched, size: 6 },

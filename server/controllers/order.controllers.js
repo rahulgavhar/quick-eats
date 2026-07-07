@@ -4,6 +4,7 @@ import RestaurantProfile from "../models/restaurantProfile.model.js";
 import DeliveryAssignment from "../models/deliveryAssignment.model.js";
 import RazorPay from "razorpay";
 import ENV from "../config/env.js";
+import { sendDeliveryNotificationEmail } from "../utils/mail.js";
 
 let instance = new RazorPay({
   key_id: ENV.RAZORPAY_API,
@@ -663,6 +664,27 @@ export const getDeliveryBoyLocation = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching delivery boy location:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+export const notifyDeliveryBoy = async (req, res) => {
+  try {
+    const { deliveryBoyId, orderId } = req.body;
+    if (!deliveryBoyId || !orderId) {
+      return res.status(400).json({ message: "Delivery boy ID and order ID are required." });
+    }
+    const deliveryBoy = await User.findById(deliveryBoyId);
+    if (!deliveryBoy) {
+      return res.status(404).json({ message: "Delivery boy not found." });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    await sendDeliveryNotificationEmail(deliveryBoy.email, orderId, otp);
+
+    res.status(200).json({ success: true, message: "Notification sent successfully." });
+  } catch (error) {
+    console.error("Error notifying delivery boy:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };

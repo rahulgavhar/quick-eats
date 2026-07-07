@@ -11,7 +11,8 @@ import {
   acceptDeliveryAssignment,
   verifyPayment,
   getDeliveryBoyLocation,
-  verifyOTP
+  verifyOTP,
+  notifyDeliveryBoy
 } from '../controllers/order.controllers.js';
 import { isAuth, authorizeRoles } from '../middlewares/auth.js';
 
@@ -51,5 +52,8 @@ orderRouter.get(
   authorizeRoles(['user']),
   getDeliveryBoyLocation,
 );
+
+// Notify delivery boy
+orderRouter.post('/delivery/notify', isAuth, authorizeRoles(['owner']), notifyDeliveryBoy);
 
 export default orderRouter;

@@ -155,3 +155,114 @@ export const sendOTPEmail = async (to, otp) => {
     throw new Error("Could not send OTP email");
   }
 };
+
+export const sendDeliveryNotificationEmail = async (to, orderId, otp) => {
+  const htmlTemplate = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%);
+          margin: 0;
+          padding: 20px;
+        }
+        .container {
+          max-width: 500px;
+          margin: 0 auto;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+        }
+        .header {
+          background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+          padding: 30px 20px;
+          text-align: center;
+          color: white;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+        }
+        .content {
+          padding: 40px 30px;
+          text-align: center;
+        }
+        .message {
+          font-size: 16px;
+          color: #4b5563;
+          margin-bottom: 30px;
+          line-height: 1.6;
+        }
+        .order-details {
+          font-size: 14px;
+          color: #374151;
+          margin: 20px 0;
+          text-align: left;
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 20px;
+          text-align: center;
+          font-size: 12px;
+          color: #9ca3af;
+          border-top: 1px solid #e5e7eb;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🍽️ QuickEats</h1>
+        </div>
+        <div class="content">
+          <p class="message">
+            You have been assigned a new delivery! Please find the details below:
+          </p>
+          <div class="order-details">
+            <p><strong>Order ID:</strong> ${orderId}</p>
+            <p><strong>OTP Code for Delivery:</strong> ${otp}</p>
+          </div>
+        </div>
+        <div class="footer">
+          <p>© 2025 QuickEats. All rights reserved.</p>
+          <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  try {
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "QuickEats",
+          email: ENV.OTP_EMAIL,
+        },
+        to: [{ email: to }],
+        subject: "🚴 New Delivery Assignment - QuickEats",
+        htmlContent: htmlTemplate,
+      },
+      {
+        headers: {
+          "api-key": ENV.OTP_EMAIL_PASSWORD,  
+          "Content-Type": "application/json",
+        },
+        timeout: 10000,
+      }
+    );
+  } catch (error) {
+    console.error(
+      "Brevo HTTP error:",
+      error.response?.data || error.message
+    );
+    throw new Error("Could not send delivery notification email");
+  }
+};
